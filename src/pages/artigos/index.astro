@@ -1,0 +1,43 @@
+---
+import CmsLayout from '../../layouts/CmsLayout.astro';
+import { getCmsPosts, fmtBR } from '../../lib/posts';
+const posts = getCmsPosts();
+---
+
+<CmsLayout title="Artigos" active="artigos">
+  <a slot="actions" href="/artigos/novo" class="inline-flex items-center gap-2 bg-evolutto-blue text-white text-sm font-bold px-5 py-2.5 rounded-full hover:brightness-110 hover:scale-105 transition-all shadow-lg shadow-evolutto-blue/30"><i class="w-4 h-4" data-lucide="square-pen"></i> Novo Artigo</a>
+
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+      <div class="relative flex-1 max-w-sm">
+        <i class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" data-lucide="search"></i>
+        <input id="busca" type="search" placeholder="Buscar artigos…" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue transition" />
+      </div>
+      <span class="text-sm text-gray-400">{posts.length} artigos</span>
+    </div>
+    <table class="w-full text-sm">
+      <thead><tr class="text-left text-[0.65rem] font-semibold uppercase tracking-widest text-gray-400 border-b border-gray-100"><th class="px-6 py-3">Título</th><th class="px-6 py-3">Categoria</th><th class="px-6 py-3">Status</th><th class="px-6 py-3">Data</th><th class="px-6 py-3 text-right">Ações</th></tr></thead>
+      <tbody id="rows">
+        {posts.map((a) => (
+          <tr class="row border-b border-gray-50 hover:bg-gray-50/60 transition-colors" data-t={a.title.toLowerCase()}>
+            <td class="px-6 py-4"><div class="flex items-center gap-3"><span class="w-9 h-9 rounded-lg bg-evolutto-gradient shrink-0"></span><span class="font-medium text-gray-900 max-w-md truncate">{a.title}</span></div></td>
+            <td class="px-6 py-4 text-gray-600">{a.category}</td>
+            <td class="px-6 py-4"><span class={`inline-flex text-[0.6rem] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ${a.draft ? 'text-amber-700 bg-amber-100' : 'text-green-700 bg-green-100'}`}>{a.draft ? 'Rascunho' : 'Publicado'}</span></td>
+            <td class="px-6 py-4 text-gray-500 whitespace-nowrap">{fmtBR(a.pubDate)}</td>
+            <td class="px-6 py-4"><div class="flex items-center justify-end gap-2"><a href="https://blog.evolutto.com" class="w-9 h-9 grid place-items-center rounded-lg text-gray-500 hover:text-evolutto-blue hover:bg-evolutto-blue/10 transition-colors"><i class="w-4 h-4" data-lucide="eye"></i></a><a href={`/artigos/editar/${a.slug}`} class="w-9 h-9 grid place-items-center rounded-lg text-gray-500 hover:text-evolutto-blue hover:bg-evolutto-blue/10 transition-colors"><i class="w-4 h-4" data-lucide="pencil"></i></a></div></td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const b = document.getElementById('busca') as HTMLInputElement;
+    b?.addEventListener('input', () => {
+      const q = b.value.toLowerCase().trim();
+      document.querySelectorAll<HTMLElement>('.row').forEach((r) => {
+        r.style.display = !q || (r.dataset.t || '').includes(q) ? '' : 'none';
+      });
+    });
+  </script>
+</CmsLayout>

@@ -1,0 +1,129 @@
+---
+import type { CmsPost } from '../lib/posts';
+interface Props { post?: CmsPost | null; }
+const { post = null } = Astro.props;
+const categorias = ['Digitalização', 'Escala', 'Marketing', 'Gestão', 'Vendas', 'Atendimento', 'Precificação', 'Produtização', 'Disrupção', 'Performance', 'Case de Sucesso', 'Geral'];
+const tools = [
+  { cmd: 'formatBlock', val: 'h2', label: 'Título H2', txt: 'H2' },
+  { cmd: 'formatBlock', val: 'h3', label: 'Título H3', txt: 'H3' },
+  { cmd: 'formatBlock', val: 'p', label: 'Parágrafo', txt: 'P' },
+  { sep: true },
+  { cmd: 'bold', icon: 'bold' },
+  { cmd: 'italic', icon: 'italic' },
+  { cmd: 'underline', icon: 'underline' },
+  { sep: true },
+  { cmd: 'insertUnorderedList', icon: 'list' },
+  { cmd: 'insertOrderedList', icon: 'list-ordered' },
+  { cmd: 'formatBlock', val: 'blockquote', icon: 'quote' },
+  { sep: true },
+  { cmd: 'createLink', icon: 'link' },
+  { cmd: 'insertImage', icon: 'image' },
+  { sep: true },
+  { cmd: 'removeFormat', icon: 'eraser' },
+];
+---
+
+<div class="grid lg:grid-cols-[1fr_340px] gap-6 items-start max-w-[1400px]">
+  <div class="space-y-6">
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+      <label class="block text-sm font-semibold text-gray-700 mb-2">Título do artigo *</label>
+      <input id="titulo" type="text" value={post?.title ?? ''} placeholder="Digite o título do artigo" class="w-full px-4 py-3 text-lg font-medium rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue transition" />
+      <label class="block text-sm font-semibold text-gray-700 mt-5 mb-2">Slug (URL)</label>
+      <input id="slug" type="text" value={post?.slug ?? ''} placeholder="gerado-a-partir-do-titulo" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue transition" />
+      <p class="text-xs text-gray-400 mt-2">/<span class="text-gray-500">blog/</span><span id="slug-preview" class="text-evolutto-blue">{post?.slug ?? 'novo-artigo'}</span></p>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+      <label class="block text-sm font-semibold text-gray-700 px-6 pt-6">Conteúdo *</label>
+      <div class="flex flex-wrap items-center gap-1 px-6 py-3 border-b border-gray-100 mt-3 bg-gray-50/60">
+        {tools.map((t) => (
+          t.sep ? <span class="w-px h-5 bg-gray-200 mx-1"></span> : (
+            <button type="button" class="rt-btn h-9 min-w-9 px-2 grid place-items-center rounded-lg text-gray-600 hover:bg-white hover:text-evolutto-blue hover:shadow-sm transition-all text-sm font-bold" data-cmd={t.cmd} data-val={t.val ?? ''} title={t.label ?? t.cmd}>
+              {t.txt ? <span>{t.txt}</span> : <i class="w-[18px] h-[18px]" data-lucide={t.icon}></i>}
+            </button>
+          )
+        ))}
+      </div>
+      <div id="editor" class="rt-editor px-6 py-5 text-[15px]" contenteditable="true" data-placeholder="Escreva o conteúdo do artigo…" set:html={post?.body ?? ''}></div>
+    </div>
+  </div>
+
+  <aside class="space-y-6">
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+      <h3 class="text-base font-bold text-gray-900 mb-5">Configurações</h3>
+      <label class="block text-sm font-semibold text-gray-700 mb-2">Categoria *</label>
+      <select id="categoria" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue transition">
+        {categorias.map((c) => <option value={c} selected={post?.category === c}>{c}</option>)}
+      </select>
+      <label class="block text-sm font-semibold text-gray-700 mt-5 mb-2">Autor</label>
+      <input type="text" value={post?.author ?? 'Equipe Evolutto'} class="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue transition" />
+      <label class="block text-sm font-semibold text-gray-700 mt-5 mb-2">Foto do autor</label>
+      <div class="flex items-center gap-3">
+        <span class="w-12 h-12 rounded-full bg-evolutto-gradient shrink-0"></span>
+        <label class="flex-1 border-2 border-dashed border-gray-300 rounded-xl px-4 py-3 text-center text-xs text-gray-500 cursor-pointer hover:border-evolutto-blue/50 transition-colors">Clique ou arraste (máx 2MB)<input type="file" accept="image/*" class="hidden" /></label>
+      </div>
+      <label class="block text-sm font-semibold text-gray-700 mt-5 mb-2">Tempo de leitura</label>
+      <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700">
+        <i class="w-4 h-4 text-evolutto-blue" data-lucide="clock"></i>
+        <span id="read-time">0 min</span><span id="word-count" class="text-gray-400">(0 palavras)</span>
+      </div>
+      <label class="block text-sm font-semibold text-gray-700 mt-5 mb-2">Meta descrição</label>
+      <textarea id="meta" rows="3" maxlength="160" placeholder="Resposta direta em 150–160 caracteres" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue transition">{post?.description ?? ''}</textarea>
+      <p class="text-xs text-gray-400 mt-1.5"><span id="meta-count">0</span>/160 caracteres</p>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+      <h3 class="text-base font-bold text-gray-900 mb-4">Imagem destaque</h3>
+      <label class="block aspect-[16/9] rounded-xl border-2 border-dashed border-gray-300 grid place-items-center cursor-pointer hover:border-evolutto-blue/50 transition-colors text-center">
+        <div class="text-gray-400"><i class="w-7 h-7 mx-auto mb-2" data-lucide="image"></i><p class="text-xs">Clique ou arraste a imagem</p></div>
+        <input type="file" accept="image/*" class="hidden" />
+      </label>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+      <h3 class="text-base font-bold text-gray-900 mb-2 flex items-center gap-2"><i class="w-4 h-4 text-evolutto-blue" data-lucide="zap"></i> Resposta rápida (IA)</h3>
+      <p class="text-xs text-gray-400 mb-3">Resumo citável no topo — otimiza para ChatGPT, Perplexity, Gemini.</p>
+      <textarea rows="3" placeholder="2–3 linhas que respondem o tema direto" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue transition">{post?.tldr ?? ''}</textarea>
+    </div>
+  </aside>
+</div>
+
+<script>
+  const slugify = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const titulo = document.getElementById('titulo') as HTMLInputElement;
+  const slug = document.getElementById('slug') as HTMLInputElement;
+  const slugPreview = document.getElementById('slug-preview')!;
+  const editor = document.getElementById('editor')!;
+  const meta = document.getElementById('meta') as HTMLTextAreaElement;
+  const metaCount = document.getElementById('meta-count')!;
+  const readTime = document.getElementById('read-time')!;
+  const wordCount = document.getElementById('word-count')!;
+
+  let slugEdited = !!slug.value;
+  slug.addEventListener('input', () => { slugEdited = true; slugPreview.textContent = slug.value || 'novo-artigo'; });
+  titulo.addEventListener('input', () => { if (!slugEdited) { slug.value = slugify(titulo.value); slugPreview.textContent = slug.value || 'novo-artigo'; } });
+
+  document.querySelectorAll<HTMLButtonElement>('.rt-btn').forEach((b) => {
+    b.addEventListener('click', (e) => {
+      e.preventDefault();
+      const cmd = b.dataset.cmd!; let val = b.dataset.val || '';
+      if (cmd === 'createLink') { val = prompt('URL do link:') || ''; if (!val) return; }
+      if (cmd === 'insertImage') { val = prompt('URL da imagem:') || ''; if (!val) return; }
+      editor.focus(); document.execCommand(cmd, false, val); updateStats();
+    });
+  });
+
+  function updateStats() {
+    const text = (editor.textContent || '').trim();
+    const words = text ? text.split(/\s+/).length : 0;
+    const mins = Math.max(1, Math.round(words / 200));
+    wordCount.textContent = `(${words} palavras)`;
+    readTime.textContent = words ? `${mins} min` : '0 min';
+  }
+  editor.addEventListener('input', updateStats);
+  meta.addEventListener('input', () => { metaCount.textContent = String(meta.value.length); });
+  updateStats(); metaCount.textContent = String(meta.value.length);
+
+  document.getElementById('btn-publicar')?.addEventListener('click', () => alert('Publicar: será conectado ao Supabase.'));
+  document.getElementById('btn-rascunho')?.addEventListener('click', () => alert('Salvar rascunho: será conectado ao Supabase.'));
+</script>

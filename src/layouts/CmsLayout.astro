@@ -1,0 +1,83 @@
+---
+import '../styles/global.css';
+
+interface Props { title?: string; active?: string; }
+const { title = 'Dashboard', active = 'dashboard' } = Astro.props;
+
+const nav = [
+  { key: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard', href: '/' },
+  { key: 'artigos', label: 'Artigos', icon: 'file-text', href: '/artigos' },
+  { key: 'novo', label: 'Novo Artigo', icon: 'square-pen', href: '/artigos/novo' },
+  { key: 'iscas', label: 'Iscas Digitais', icon: 'magnet', href: '/iscas' },
+  { key: 'historias', label: 'Histórias de Clientes', icon: 'star', href: '/historias' },
+  { key: 'comentarios', label: 'Comentários', icon: 'message-circle', href: '/comentarios' },
+  { key: 'banners', label: 'Banners', icon: 'megaphone', href: '/banners' },
+];
+const navBottom = [
+  { key: 'usuarios', label: 'Usuários', icon: 'users', href: '/usuarios' },
+  { key: 'ver-blog', label: 'Ver Blog', icon: 'external-link', href: 'https://blog.evolutto.com' },
+  { key: 'ver-site', label: 'Ver Site', icon: 'globe', href: 'https://www.evolutto.com' },
+];
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>{title} — Evolutto CMS</title>
+  </head>
+  <body class="bg-[#F3F3F1] text-gray-900 antialiased">
+    <div class="flex min-h-screen">
+      <!-- Sidebar -->
+      <aside class="hidden lg:flex w-64 shrink-0 bg-evolutto-black text-gray-300 flex-col fixed inset-y-0 left-0 z-40">
+        <div class="flex items-center gap-2.5 px-6 h-[68px] border-b border-white/10">
+          <img src="/evolutto-logo-white.png" alt="Evolutto" style="height:22px;width:auto" />
+          <span class="text-[10px] font-bold uppercase tracking-[0.18em] text-evolutto-blue border border-evolutto-blue/40 rounded px-1.5 py-0.5">CMS</span>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-5 px-3 space-y-1">
+          {nav.map((n) => (
+            <a href={n.href} class={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${active === n.key ? 'bg-evolutto-blue/15 text-white border border-evolutto-blue/30' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+              <i class={`w-[18px] h-[18px] ${active === n.key ? 'text-evolutto-blue' : ''}`} data-lucide={n.icon}></i>
+              {n.label}
+            </a>
+          ))}
+          <div class="h-px bg-white/10 my-4 mx-2"></div>
+          {navBottom.map((n) => (
+            <a href={n.href} class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
+              <i class="w-[18px] h-[18px]" data-lucide={n.icon}></i>
+              {n.label}
+            </a>
+          ))}
+        </nav>
+        <!-- Usuário -->
+        <div class="border-t border-white/10 p-4 flex items-center gap-3">
+          <span class="w-9 h-9 rounded-full bg-evolutto-blue text-white grid place-items-center text-xs font-bold">RS</span>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-white truncate">Rodrigo Souza</p>
+            <p class="text-[11px] text-gray-500">Admin Full</p>
+          </div>
+          <button class="text-gray-500 hover:text-white transition-colors" aria-label="Sair"><i class="w-[18px] h-[18px]" data-lucide="log-out"></i></button>
+        </div>
+      </aside>
+
+      <!-- Conteúdo -->
+      <div class="flex-1 lg:ml-64 min-w-0">
+        <header class="h-[68px] bg-white border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-30">
+          <h1 class="text-lg font-bold tracking-tight text-gray-900">{title}</h1>
+          <slot name="actions" />
+        </header>
+        <main class="p-6 lg:p-8">
+          <slot />
+        </main>
+      </div>
+    </div>
+
+    <script>
+      import { createIcons, icons } from 'lucide';
+      createIcons({ icons });
+      (window as any).lucide = { createIcons: () => createIcons({ icons }) };
+    </script>
+  </body>
+</html>

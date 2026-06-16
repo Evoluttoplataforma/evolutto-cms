@@ -1,0 +1,20 @@
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/inter/800.css';
+
+body { font-family: 'Inter', sans-serif; }
+
+/* Editor (rich text) */
+.rt-editor { min-height: 420px; outline: none; }
+.rt-editor:empty::before { content: attr(data-placeholder); color: #9ca3af; }
+.rt-editor h2 { font-size: 1.6rem; font-weight: 700; color: #18191b; margin: 1.6rem 0 .6rem; letter-spacing: -.02em; }
+.rt-editor h3 { font-size: 1.25rem; font-weight: 700; color: #18191b; margin: 1.3rem 0 .5rem; }
+.rt-editor p { margin: .7rem 0; line-height: 1.8; color: #3f424b; }
+.rt-editor ul { list-style: disc; padding-left: 1.4rem; margin: .7rem 0; }
+.rt-editor ol { list-style: decimal; padding-left: 1.4rem; margin: .7rem 0; }
+.rt-editor li { margin: .3rem 0; line-height: 1.7; }
+.rt-editor a { color: #3363ff; text-decoration: underline; }
+.rt-editor blockquote { border-left: 3px solid #3363ff; padding-left: 1rem; color: #57534e; font-style: italic; margin: 1rem 0; }
+.rt-editor img { border-radius: .75rem; max-width: 100%; margin: 1rem 0; }

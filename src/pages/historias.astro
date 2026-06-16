@@ -1,0 +1,59 @@
+---
+import CmsLayout from '../layouts/CmsLayout.astro';
+const historias = [
+  { nome: 'Afonso Flatin', empresa: 'Bastidores da Advocacia', resultado: 'Empresa triplicou de tamanho', depo: 'De 2023 para 2024 nossa empresa triplicou. Antes tudo dependia de mim.', status: 'aprovado' },
+  { nome: 'André de Souza Machado', empresa: 'SGE Soluções', resultado: '+152% de faturamento', depo: 'Em 90 dias conquistei 45 clientes. Hoje somos 6 pessoas conectadas por um propósito.', status: 'aprovado' },
+  { nome: 'Marcos Vinícius', empresa: 'MV Consultoria', resultado: 'A validar', depo: 'Estou começando agora com o Evolutto e quero compartilhar minha jornada.', status: 'pendente' },
+];
+---
+
+<CmsLayout title="Histórias de Clientes" active="historias">
+  <button slot="actions" id="novo" class="inline-flex items-center gap-2 bg-evolutto-blue text-white text-sm font-bold px-5 py-2.5 rounded-full hover:brightness-110 hover:scale-105 transition-all shadow-lg shadow-evolutto-blue/30"><i class="w-4 h-4" data-lucide="plus"></i> Nova história</button>
+
+  <div id="form" class="hidden bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-6 max-w-2xl">
+    <h2 class="text-base font-bold text-gray-900 mb-5">Nova história de cliente</h2>
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div><label class="block text-sm font-semibold text-gray-700 mb-1.5">Nome do cliente</label><input class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue" placeholder="Nome" /></div>
+      <div><label class="block text-sm font-semibold text-gray-700 mb-1.5">Empresa</label><input class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue" placeholder="Empresa" /></div>
+      <div class="sm:col-span-2"><label class="block text-sm font-semibold text-gray-700 mb-1.5">Resultado / métrica</label><input class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue" placeholder="Ex.: +152% de faturamento, 1→60 clientes" /></div>
+      <div class="sm:col-span-2"><label class="block text-sm font-semibold text-gray-700 mb-1.5">Depoimento</label><textarea rows="3" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue" placeholder="O que o cliente disse"></textarea></div>
+      <div><label class="block text-sm font-semibold text-gray-700 mb-1.5">Foto do cliente</label><label class="block border-2 border-dashed border-gray-300 rounded-xl px-4 py-3 text-center text-xs text-gray-500 cursor-pointer hover:border-evolutto-blue/50">Enviar foto<input type="file" accept="image/*" class="hidden" /></label></div>
+    </div>
+    <div class="flex gap-2 mt-5"><button class="bg-evolutto-blue text-white text-sm font-bold px-5 py-2.5 rounded-full hover:brightness-110" onclick="alert('Salvar: Supabase em breve')">Criar história</button><button id="cancelar" class="text-sm font-semibold text-gray-600 px-4 py-2.5 rounded-full border border-gray-300 hover:bg-gray-100">Cancelar</button></div>
+  </div>
+
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+    {historias.map((h) => (
+      <div class="hist bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col" data-status={h.status}>
+        <div class="flex items-center gap-3 mb-4">
+          <span class="w-12 h-12 rounded-full bg-evolutto-gradient shrink-0 grid place-items-center text-white text-sm font-bold">{h.nome.split(' ').map((n) => n[0]).slice(0,2).join('')}</span>
+          <div><p class="font-bold text-gray-900 leading-tight">{h.nome}</p><p class="text-xs text-gray-400">{h.empresa}</p></div>
+        </div>
+        <span class="inline-flex w-fit text-[0.65rem] font-bold uppercase tracking-widest text-evolutto-blue bg-evolutto-blue/10 px-2.5 py-1 rounded-full mb-3">{h.resultado}</span>
+        <p class="text-sm text-gray-600 leading-relaxed flex-1">"{h.depo}"</p>
+        <div class="flex items-center gap-2 mt-5 pt-4 border-t border-gray-100">
+          <button class={`btn-aprovar flex-1 items-center justify-center gap-2 text-sm font-semibold text-white bg-green-600 rounded-full py-2 hover:brightness-110 ${h.status === 'pendente' ? 'inline-flex' : 'hidden'}`}><i class="w-4 h-4" data-lucide="check"></i> Aprovar</button>
+          <span class={`aprovada flex-1 items-center justify-center gap-1.5 text-sm font-semibold text-green-700 ${h.status === 'pendente' ? 'hidden' : 'inline-flex'}`}><i class="w-4 h-4" data-lucide="badge-check"></i> Aprovada</span>
+          <button class="w-10 h-10 grid place-items-center rounded-full border border-gray-300 text-gray-500 hover:text-evolutto-blue hover:border-evolutto-blue/40"><i class="w-4 h-4" data-lucide="pencil"></i></button>
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <script>
+    document.querySelectorAll<HTMLButtonElement>('.btn-aprovar').forEach((b) => b.addEventListener('click', () => {
+      const card = b.closest('.hist') as HTMLElement;
+      card.dataset.status = 'aprovado';
+      b.classList.add('hidden'); b.classList.remove('inline-flex');
+      const ap = card.querySelector('.aprovada') as HTMLElement;
+      ap.classList.remove('hidden'); ap.classList.add('inline-flex');
+      if ((window as any).lucide) (window as any).lucide.createIcons();
+    }));
+  </script>
+
+  <script>
+    const f = document.getElementById('form')!;
+    document.getElementById('novo')?.addEventListener('click', () => f.classList.toggle('hidden'));
+    document.getElementById('cancelar')?.addEventListener('click', () => f.classList.add('hidden'));
+  </script>
+</CmsLayout>

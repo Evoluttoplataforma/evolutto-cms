@@ -1,0 +1,96 @@
+---
+import CmsLayout from '../layouts/CmsLayout.astro';
+const banners = [
+  { titulo: 'Diagnóstico gratuito', posicao: 'Topo do site', link: '/#cta', ativo: true },
+  { titulo: 'Curso Do Zero a Escala', posicao: 'Sidebar do blog', link: '/do-zero-a-escala', ativo: true },
+  { titulo: 'Bootcamp da Virada', posicao: 'Rodapé', link: '/bootcamp', ativo: false },
+];
+const posicoes = ['Topo do site', 'Sidebar do blog', 'Rodapé', 'Dentro do artigo'];
+---
+
+<CmsLayout title="Banners" active="banners">
+  <button slot="actions" id="novo" class="inline-flex items-center gap-2 bg-evolutto-blue text-white text-sm font-bold px-5 py-2.5 rounded-full hover:brightness-110 hover:scale-105 transition-all shadow-lg shadow-evolutto-blue/30"><i class="w-4 h-4" data-lucide="plus"></i> Novo banner</button>
+
+  <!-- Form criar/editar -->
+  <div id="form" class="hidden bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-6 max-w-2xl">
+    <h2 id="form-titulo" class="text-base font-bold text-gray-900 mb-5">Novo banner</h2>
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div class="sm:col-span-2"><label class="block text-sm font-semibold text-gray-700 mb-1.5">Título</label><input id="b-titulo" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue" placeholder="Título do banner" /></div>
+      <div><label class="block text-sm font-semibold text-gray-700 mb-1.5">Posição</label><select id="b-posicao" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue">{posicoes.map((p) => <option>{p}</option>)}</select></div>
+      <div><label class="block text-sm font-semibold text-gray-700 mb-1.5">Link de destino</label><input id="b-link" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue" placeholder="/pagina ou https://" /></div>
+      <div class="sm:col-span-2"><label class="block text-sm font-semibold text-gray-700 mb-1.5">Imagem</label><label class="block aspect-[16/5] rounded-xl border-2 border-dashed border-gray-300 grid place-items-center cursor-pointer hover:border-evolutto-blue/50 text-gray-400 text-center"><div><i class="w-6 h-6 mx-auto mb-1" data-lucide="image"></i><p class="text-xs">Clique ou arraste</p></div><input type="file" accept="image/*" class="hidden" /></label></div>
+    </div>
+    <div class="flex gap-2 mt-5"><button id="salvar" class="bg-evolutto-blue text-white text-sm font-bold px-5 py-2.5 rounded-full hover:brightness-110">Salvar banner</button><button id="cancelar" class="text-sm font-semibold text-gray-600 px-4 py-2.5 rounded-full border border-gray-300 hover:bg-gray-100">Cancelar</button></div>
+  </div>
+
+  <div id="grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+    {banners.map((b) => (
+      <div class="banner bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden" data-titulo={b.titulo} data-posicao={b.posicao} data-link={b.link} data-ativo={String(b.ativo)}>
+        <div class="aspect-[16/6] bg-evolutto-gradient relative">
+          <button class="toggle absolute top-3 right-3 text-[0.6rem] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full cursor-pointer transition-colors" data-on="bg-green-100 text-green-700" data-off="bg-gray-200 text-gray-500"></button>
+        </div>
+        <div class="p-5">
+          <h3 class="b-titulo font-bold text-gray-900">{b.titulo}</h3>
+          <p class="b-meta text-xs text-gray-500 mt-1">{b.posicao} · {b.link}</p>
+          <div class="flex items-center gap-2 mt-4">
+            <button class="editar flex-1 text-sm font-semibold text-gray-700 border border-gray-300 rounded-full py-2 hover:bg-gray-50 hover:border-evolutto-blue/40 hover:text-evolutto-blue transition-colors">Editar</button>
+            <button class="excluir w-10 h-10 grid place-items-center rounded-full border border-gray-300 text-gray-500 hover:text-evolutto-red hover:border-evolutto-red/40 transition-colors" aria-label="Excluir"><i class="w-4 h-4" data-lucide="trash-2"></i></button>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <script>
+    const form = document.getElementById('form')!;
+    const formTitulo = document.getElementById('form-titulo')!;
+    const fTit = document.getElementById('b-titulo') as HTMLInputElement;
+    const fPos = document.getElementById('b-posicao') as HTMLSelectElement;
+    const fLink = document.getElementById('b-link') as HTMLInputElement;
+    let editando: HTMLElement | null = null;
+
+    function abrirNovo() {
+      editando = null; formTitulo.textContent = 'Novo banner';
+      fTit.value = ''; fPos.selectedIndex = 0; fLink.value = '';
+      form.classList.remove('hidden'); form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    function abrirEdicao(card: HTMLElement) {
+      editando = card; formTitulo.textContent = 'Editar banner';
+      fTit.value = card.dataset.titulo || '';
+      fPos.value = card.dataset.posicao || '';
+      fLink.value = card.dataset.link || '';
+      form.classList.remove('hidden'); form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    function pintarToggle(btn: HTMLElement, ativo: boolean) {
+      const on = (btn.dataset.on || '').split(' '); const off = (btn.dataset.off || '').split(' ');
+      btn.classList.remove(...on, ...off);
+      btn.classList.add(...(ativo ? on : off));
+      btn.textContent = ativo ? 'Ativo' : 'Inativo';
+    }
+
+    document.getElementById('novo')?.addEventListener('click', abrirNovo);
+    document.getElementById('cancelar')?.addEventListener('click', () => form.classList.add('hidden'));
+    document.getElementById('salvar')?.addEventListener('click', () => {
+      const card = editando;
+      if (card) {
+        card.dataset.titulo = fTit.value; card.dataset.posicao = fPos.value; card.dataset.link = fLink.value;
+        card.querySelector('.b-titulo')!.textContent = fTit.value;
+        card.querySelector('.b-meta')!.textContent = `${fPos.value} · ${fLink.value}`;
+      }
+      form.classList.add('hidden');
+      // Persistência real: Supabase (em breve)
+    });
+
+    function bind(card: HTMLElement) {
+      const toggle = card.querySelector('.toggle') as HTMLElement;
+      pintarToggle(toggle, card.dataset.ativo === 'true');
+      toggle.addEventListener('click', () => {
+        const novo = card.dataset.ativo !== 'true';
+        card.dataset.ativo = String(novo); pintarToggle(toggle, novo);
+      });
+      card.querySelector('.editar')?.addEventListener('click', () => abrirEdicao(card));
+      card.querySelector('.excluir')?.addEventListener('click', () => { if (confirm('Excluir este banner?')) card.remove(); });
+    }
+    document.querySelectorAll<HTMLElement>('.banner').forEach(bind);
+  </script>
+</CmsLayout>

@@ -1,0 +1,87 @@
+---
+import CmsLayout from '../layouts/CmsLayout.astro';
+const usuarios = [
+  { nome: 'Rodrigo Souza', email: 'rodrigo@evolutto.com', papel: 'Admin Full', ativo: true },
+  { nome: 'Igor Furniel', email: 'igor@evolutto.com', papel: 'Editor', ativo: true },
+  { nome: 'Equipe Marketing', email: 'marketing@evolutto.com', papel: 'Autor', ativo: true },
+  { nome: 'Revisor Convidado', email: 'revisor@evolutto.com', papel: 'Revisor', ativo: false },
+];
+const papeis = ['Admin Full', 'Editor', 'Autor', 'Revisor'];
+const cor: Record<string, string> = {
+  'Admin Full': 'text-evolutto-blue bg-evolutto-blue/10',
+  'Editor': 'text-purple-700 bg-purple-100',
+  'Autor': 'text-amber-700 bg-amber-100',
+  'Revisor': 'text-gray-600 bg-gray-200',
+};
+---
+
+<CmsLayout title="Usuários" active="usuarios">
+  <button slot="actions" id="novo" class="inline-flex items-center gap-2 bg-evolutto-blue text-white text-sm font-bold px-5 py-2.5 rounded-full hover:brightness-110 hover:scale-105 transition-all shadow-lg shadow-evolutto-blue/30"><i class="w-4 h-4" data-lucide="user-plus"></i> Novo usuário</button>
+
+  <!-- Form criar/editar -->
+  <div id="form" class="hidden bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-6 max-w-2xl">
+    <h2 id="form-titulo" class="text-base font-bold text-gray-900 mb-5">Novo usuário</h2>
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div><label class="block text-sm font-semibold text-gray-700 mb-1.5">Nome</label><input id="u-nome" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue" placeholder="Nome completo" /></div>
+      <div><label class="block text-sm font-semibold text-gray-700 mb-1.5">E-mail</label><input id="u-email" type="email" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue" placeholder="email@evolutto.com" /></div>
+      <div><label class="block text-sm font-semibold text-gray-700 mb-1.5">Papel</label><select id="u-papel" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue">{papeis.map((p) => <option>{p}</option>)}</select></div>
+      <div><label class="block text-sm font-semibold text-gray-700 mb-1.5">Senha provisória</label><input id="u-senha" type="text" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue" placeholder="Gerar / definir" /></div>
+    </div>
+    <p class="text-xs text-gray-400 mt-3">Os papéis definem o acesso: <b>Admin</b> tudo · <b>Editor</b> publica · <b>Autor</b> cria rascunhos · <b>Revisor</b> comenta/aprova.</p>
+    <div class="flex gap-2 mt-5"><button id="salvar" class="bg-evolutto-blue text-white text-sm font-bold px-5 py-2.5 rounded-full hover:brightness-110">Salvar usuário</button><button id="cancelar" class="text-sm font-semibold text-gray-600 px-4 py-2.5 rounded-full border border-gray-300 hover:bg-gray-100">Cancelar</button></div>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <table class="w-full text-sm">
+      <thead><tr class="text-left text-[0.65rem] font-semibold uppercase tracking-widest text-gray-400 border-b border-gray-100"><th class="px-6 py-3">Usuário</th><th class="px-6 py-3">Papel</th><th class="px-6 py-3">Status</th><th class="px-6 py-3 text-right">Ações</th></tr></thead>
+      <tbody id="rows">
+        {usuarios.map((u) => (
+          <tr class="user border-b border-gray-50 hover:bg-gray-50/60 transition-colors" data-nome={u.nome} data-email={u.email} data-papel={u.papel}>
+            <td class="px-6 py-4"><div class="flex items-center gap-3"><span class="w-9 h-9 rounded-full bg-evolutto-gradient grid place-items-center text-white text-xs font-bold shrink-0">{u.nome.split(' ').map((n) => n[0]).slice(0,2).join('')}</span><div><p class="u-nome font-medium text-gray-900">{u.nome}</p><p class="u-email text-xs text-gray-400">{u.email}</p></div></div></td>
+            <td class="px-6 py-4"><span class={`u-papel inline-flex text-[0.6rem] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ${cor[u.papel]}`}>{u.papel}</span></td>
+            <td class="px-6 py-4"><span class={`inline-flex text-[0.6rem] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ${u.ativo ? 'text-green-700 bg-green-100' : 'text-gray-500 bg-gray-200'}`}>{u.ativo ? 'Ativo' : 'Inativo'}</span></td>
+            <td class="px-6 py-4"><div class="flex items-center justify-end gap-2"><button class="editar w-9 h-9 grid place-items-center rounded-lg text-gray-500 hover:text-evolutto-blue hover:bg-evolutto-blue/10"><i class="w-4 h-4" data-lucide="pencil"></i></button><button class="excluir w-9 h-9 grid place-items-center rounded-lg text-gray-500 hover:text-evolutto-red hover:bg-evolutto-red/10"><i class="w-4 h-4" data-lucide="trash-2"></i></button></div></td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const form = document.getElementById('form')!;
+    const formTitulo = document.getElementById('form-titulo')!;
+    const fNome = document.getElementById('u-nome') as HTMLInputElement;
+    const fEmail = document.getElementById('u-email') as HTMLInputElement;
+    const fPapel = document.getElementById('u-papel') as HTMLSelectElement;
+    let editando: HTMLElement | null = null;
+
+    function abrirNovo() {
+      editando = null; formTitulo.textContent = 'Novo usuário';
+      fNome.value = ''; fEmail.value = ''; fPapel.selectedIndex = 0;
+      form.classList.remove('hidden'); form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    function abrirEdicao(row: HTMLElement) {
+      editando = row; formTitulo.textContent = 'Editar usuário';
+      fNome.value = row.dataset.nome || ''; fEmail.value = row.dataset.email || ''; fPapel.value = row.dataset.papel || '';
+      form.classList.remove('hidden'); form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    document.getElementById('novo')?.addEventListener('click', abrirNovo);
+    document.getElementById('cancelar')?.addEventListener('click', () => form.classList.add('hidden'));
+    document.getElementById('salvar')?.addEventListener('click', () => {
+      if (editando) {
+        editando.dataset.nome = fNome.value; editando.dataset.email = fEmail.value; editando.dataset.papel = fPapel.value;
+        editando.querySelector('.u-nome')!.textContent = fNome.value;
+        editando.querySelector('.u-email')!.textContent = fEmail.value;
+        editando.querySelector('.u-papel')!.textContent = fPapel.value;
+      }
+      form.classList.add('hidden');
+      // Persistência real: Supabase Auth + tabela de perfis (em breve)
+    });
+
+    document.querySelectorAll<HTMLElement>('.user').forEach((row) => {
+      row.querySelector('.editar')?.addEventListener('click', () => abrirEdicao(row));
+      row.querySelector('.excluir')?.addEventListener('click', () => { if (confirm('Remover este usuário?')) row.remove(); });
+    });
+  </script>
+</CmsLayout>
