@@ -53,12 +53,12 @@ const navBottom = [
         </nav>
         <!-- Usuário -->
         <div class="border-t border-white/10 p-4 flex items-center gap-3">
-          <span class="w-9 h-9 rounded-full bg-evolutto-blue text-white grid place-items-center text-xs font-bold">RS</span>
+          <span data-user-iniciais class="w-9 h-9 rounded-full bg-evolutto-blue text-white grid place-items-center text-xs font-bold">EV</span>
           <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold text-white truncate">Rodrigo Souza</p>
+            <p data-user-nome class="text-sm font-semibold text-white truncate">Equipe</p>
             <p class="text-[11px] text-gray-500">Admin Full</p>
           </div>
-          <button class="text-gray-500 hover:text-white transition-colors" aria-label="Sair"><i class="w-[18px] h-[18px]" data-lucide="log-out"></i></button>
+          <button id="cms-logout" class="text-gray-500 hover:text-white transition-colors" aria-label="Sair"><i class="w-[18px] h-[18px]" data-lucide="log-out"></i></button>
         </div>
       </aside>
 
@@ -78,6 +78,22 @@ const navBottom = [
       import { createIcons, icons } from 'lucide';
       createIcons({ icons });
       (window as any).lucide = { createIcons: () => createIcons({ icons }) };
+    </script>
+
+    <script>
+      import { supa, requireAuth } from '../lib/supa';
+      // protege o painel: sem sessão -> /login
+      requireAuth();
+      // mostra o usuário logado no rodapé da sidebar
+      supa.auth.getUser().then(({ data }) => {
+        const u = data.user; if (!u) return;
+        const nome = (u.user_metadata && u.user_metadata.nome) || (u.email || '').split('@')[0];
+        const elNome = document.querySelector('[data-user-nome]'); if (elNome) elNome.textContent = nome;
+        const elIni = document.querySelector('[data-user-iniciais]'); if (elIni) elIni.textContent = nome.slice(0, 2).toUpperCase();
+      });
+      document.getElementById('cms-logout')?.addEventListener('click', async () => {
+        await supa.auth.signOut(); window.location.href = '/login';
+      });
     </script>
   </body>
 </html>
