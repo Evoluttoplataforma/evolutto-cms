@@ -56,7 +56,7 @@ const tools = [
         {categorias.map((c) => <option value={c} selected={post?.category === c}>{c}</option>)}
       </select>
       <label class="block text-sm font-semibold text-gray-700 mt-5 mb-2">Autor</label>
-      <input type="text" value={post?.author ?? 'Equipe Evolutto'} class="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue transition" />
+      <input id="autor" type="text" value={post?.author ?? 'Equipe Evolutto'} class="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue transition" />
       <label class="block text-sm font-semibold text-gray-700 mt-5 mb-2">Foto do autor</label>
       <div class="flex items-center gap-3">
         <span class="w-12 h-12 rounded-full bg-evolutto-gradient shrink-0"></span>
@@ -83,7 +83,7 @@ const tools = [
     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
       <h3 class="text-base font-bold text-gray-900 mb-2 flex items-center gap-2"><i class="w-4 h-4 text-evolutto-blue" data-lucide="zap"></i> Resposta rápida (IA)</h3>
       <p class="text-xs text-gray-400 mb-3">Resumo citável no topo — otimiza para ChatGPT, Perplexity, Gemini.</p>
-      <textarea rows="3" placeholder="2–3 linhas que respondem o tema direto" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue transition">{post?.tldr ?? ''}</textarea>
+      <textarea id="tldr" rows="3" placeholder="2–3 linhas que respondem o tema direto" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue transition">{post?.tldr ?? ''}</textarea>
     </div>
   </aside>
 </div>
@@ -124,6 +124,76 @@ const tools = [
   meta.addEventListener('input', () => { metaCount.textContent = String(meta.value.length); });
   updateStats(); metaCount.textContent = String(meta.value.length);
 
-  document.getElementById('btn-publicar')?.addEventListener('click', () => alert('Publicar: será conectado ao Supabase.'));
-  document.getElementById('btn-rascunho')?.addEventListener('click', () => alert('Salvar rascunho: será conectado ao Supabase.'));
+  // ---- Supabase: carregar (ao editar) e salvar ----
+  import { supa, requireAuth } from '../lib/supa';
+
+  const categoria = document.getElementById('categoria') as HTMLSelectElement;
+  const autor = document.getElementById('autor') as HTMLInputElement;
+  const tldr = document.getElementById('tldr') as HTMLTextAreaElement;
+  const btnPub = document.getElementById('btn-publicar') as HTMLButtonElement | null;
+  const btnRas = document.getElementById('btn-rascunho') as HTMLButtonElement | null;
+
+  const editSlug = new URLSearchParams(location.search).get('slug');
+  let editId: string | null = null; // id do artigo em edição
+
+  // Se estiver editando, busca o artigo e preenche o formulário
+  if (editSlug) {
+    const { data, error } = await supa.from('evolutto_articles').select('*').eq('slug', editSlug).maybeSingle();
+    if (error) { alert('Erro ao carregar o artigo: ' + error.message); }
+    else if (data) {
+      editId = data.id;
+      titulo.value = data.title || '';
+      slug.value = data.slug || ''; slugEdited = true; slugPreview.textContent = data.slug || 'novo-artigo';
+      editor.innerHTML = data.body || '';
+      if (data.category) categoria.value = data.category;
+      autor.value = data.author || 'Equipe Evolutto';
+      meta.value = data.seo_description || data.description || '';
+      tldr.value = data.tldr || '';
+      updateStats(); metaCount.textContent = String(meta.value.length);
+    }
+  }
+
+  function countWords() {
+    const text = (editor.textContent || '').trim();
+    return text ? text.split(/\s+/).filter(Boolean).length : 0;
+  }
+
+  async function salvar(status: 'published' | 'draft', btn: HTMLButtonElement | null) {
+    const session = await requireAuth();
+    if (!session) return; // requireAuth já redireciona pro /acesso
+    const t = titulo.value.trim();
+    if (!t) { alert('Dê um título ao artigo.'); titulo.focus(); return; }
+    const body = (editor as HTMLElement).innerHTML.trim();
+    if (!body) { alert('Escreva o conteúdo do artigo.'); editor.focus(); return; }
+    const s = (slug.value.trim() || slugify(t));
+    const desc = meta.value.trim() || null;
+    const hoje = new Date().toISOString().slice(0, 10);
+    const row: Record<string, any> = {
+      slug: s, title: t, body,
+      category: categoria.value,
+      author: autor.value.trim() || 'Equipe Evolutto',
+      description: desc, seo_description: desc,
+      tldr: tldr.value.trim() || null,
+      reading_time: Math.max(1, Math.round(countWords() / 200)),
+      status, updated_date: hoje,
+    };
+    const orig = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Salvando…'; }
+    let error: any = null;
+    if (editId) {
+      ({ error } = await supa.from('evolutto_articles').update(row).eq('id', editId));
+    } else {
+      if (status === 'published') row.pub_date = hoje;
+      ({ error } = await supa.from('evolutto_articles').insert(row));
+    }
+    if (error) {
+      if (btn) { btn.disabled = false; btn.textContent = orig; }
+      alert(error.code === '23505' ? 'Já existe um artigo com esse slug. Mude o slug.' : 'Erro ao salvar: ' + error.message);
+      return;
+    }
+    location.href = '/artigos';
+  }
+
+  btnPub?.addEventListener('click', () => salvar('published', btnPub));
+  btnRas?.addEventListener('click', () => salvar('draft', btnRas));
 </script>

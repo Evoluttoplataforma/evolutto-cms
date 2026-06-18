@@ -1,0 +1,20 @@
+---
+import CmsLayout from '../../layouts/CmsLayout.astro';
+import ArticleEditor from '../../components/ArticleEditor.astro';
+---
+
+<CmsLayout title="Editar Artigo" active="artigos">
+  <div slot="actions" class="flex items-center gap-2">
+    <a id="ver-blog" href="https://www.evolutto.com/blog" target="_blank" rel="noopener" class="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 border border-gray-300 px-4 py-2.5 rounded-full hover:bg-gray-100 transition-colors"><i class="w-4 h-4" data-lucide="eye"></i> Ver no blog</a>
+    <button id="btn-rascunho" class="inline-flex items-center gap-2 text-sm font-semibold text-gray-700 border border-gray-300 px-4 py-2.5 rounded-full hover:bg-gray-100 transition-colors"><i class="w-4 h-4" data-lucide="save"></i> Salvar rascunho</button>
+    <button id="btn-publicar" class="inline-flex items-center gap-2 bg-evolutto-blue text-white text-sm font-bold px-5 py-2.5 rounded-full hover:brightness-110 hover:scale-105 transition-all shadow-lg shadow-evolutto-blue/30">Publicar <i class="w-4 h-4" data-lucide="arrow-up-right"></i></button>
+  </div>
+  <ArticleEditor />
+
+  <script>
+    // aponta "Ver no blog" pro post específico
+    const s = new URLSearchParams(location.search).get('slug');
+    const link = document.getElementById('ver-blog') as HTMLAnchorElement | null;
+    if (s && link) link.href = `https://www.evolutto.com/blog/${s}`;
+  </script>
+</CmsLayout>
