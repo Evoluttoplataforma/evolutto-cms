@@ -41,7 +41,7 @@ const recentes = posts.slice(0, 6);
             <td class="px-6 py-4 text-gray-600">{a.category}</td>
             <td class="px-6 py-4"><span class={`inline-flex text-[0.6rem] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ${a.draft ? 'text-amber-700 bg-amber-100' : 'text-green-700 bg-green-100'}`}>{a.draft ? 'Rascunho' : 'Publicado'}</span></td>
             <td class="px-6 py-4 text-gray-500 whitespace-nowrap">{fmtBR(a.pubDate)}</td>
-            <td class="px-6 py-4"><div class="flex items-center justify-end gap-2"><a href="https://blog.evolutto.com" class="w-9 h-9 grid place-items-center rounded-lg text-gray-500 hover:text-evolutto-blue hover:bg-evolutto-blue/10 transition-colors"><i class="w-4 h-4" data-lucide="eye"></i></a><a href={`/artigos/editar/${a.slug}`} class="w-9 h-9 grid place-items-center rounded-lg text-gray-500 hover:text-evolutto-blue hover:bg-evolutto-blue/10 transition-colors"><i class="w-4 h-4" data-lucide="pencil"></i></a></div></td>
+            <td class="px-6 py-4"><div class="flex items-center justify-end gap-2"><a href="https://www.evolutto.com/blog" class="w-9 h-9 grid place-items-center rounded-lg text-gray-500 hover:text-evolutto-blue hover:bg-evolutto-blue/10 transition-colors"><i class="w-4 h-4" data-lucide="eye"></i></a><a href={`/artigos/editar/${a.slug}`} class="w-9 h-9 grid place-items-center rounded-lg text-gray-500 hover:text-evolutto-blue hover:bg-evolutto-blue/10 transition-colors"><i class="w-4 h-4" data-lucide="pencil"></i></a></div></td>
           </tr>
         ))}
       </tbody>

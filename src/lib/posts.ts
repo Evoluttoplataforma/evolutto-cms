@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 // Lê os artigos reais do blog (bridge local até o Supabase).
-const POSTS_DIR = path.resolve(process.cwd(), '../evolutto-blog/src/content/posts');
+const POSTS_DIR = path.resolve(process.cwd(), '../evolutto-site/src/content/posts');
 
 export interface CmsPost {
   slug: string;
