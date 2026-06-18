@@ -1,0 +1,3 @@
+# CMS interno da Evolutto — não indexar nada.
+User-agent: *
+Disallow: /
