@@ -1,18 +1,13 @@
 ---
 import CmsLayout from '../layouts/CmsLayout.astro';
-import { getCmsPosts, fmtBR } from '../lib/posts';
 
-const posts = getCmsPosts();
-const publicados = posts.filter((p) => !p.draft).length;
-const rascunhos = posts.filter((p) => p.draft).length;
 const stats = [
-  { label: 'Total de artigos', value: String(posts.length), accent: false },
-  { label: 'Publicados', value: String(publicados), accent: true },
-  { label: 'Rascunhos', value: String(rascunhos), accent: false },
-  { label: 'Usuários', value: '4', accent: false },
-  { label: 'Histórias pendentes', value: '0', accent: true },
+  { id: 'stat-total', label: 'Total de artigos', accent: false },
+  { id: 'stat-pub', label: 'Publicados', accent: true },
+  { id: 'stat-rascunho', label: 'Rascunhos', accent: false },
+  { id: 'stat-users', label: 'Usuários', accent: false },
+  { id: 'stat-historias', label: 'Histórias pendentes', accent: true },
 ];
-const recentes = posts.slice(0, 6);
 ---
 
 <CmsLayout title="Dashboard" active="dashboard">
@@ -22,7 +17,7 @@ const recentes = posts.slice(0, 6);
     {stats.map((s) => (
       <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
         <p class="text-sm text-gray-500 mb-3">{s.label}</p>
-        <p class={`text-4xl font-bold tracking-tight ${s.accent ? 'text-evolutto-blue' : 'text-gray-900'}`}>{s.value}</p>
+        <p id={s.id} class={`text-4xl font-bold tracking-tight ${s.accent ? 'text-evolutto-blue' : 'text-gray-900'}`}>—</p>
       </div>
     ))}
   </div>
@@ -34,17 +29,59 @@ const recentes = posts.slice(0, 6);
     </div>
     <table class="w-full text-sm">
       <thead><tr class="text-left text-[0.65rem] font-semibold uppercase tracking-widest text-gray-400 border-b border-gray-100"><th class="px-6 py-3">Título</th><th class="px-6 py-3">Categoria</th><th class="px-6 py-3">Status</th><th class="px-6 py-3">Data</th><th class="px-6 py-3 text-right">Ações</th></tr></thead>
-      <tbody>
-        {recentes.map((a) => (
-          <tr class="border-b border-gray-50 hover:bg-gray-50/60 transition-colors">
-            <td class="px-6 py-4"><div class="flex items-center gap-3"><span class="w-9 h-9 rounded-lg bg-evolutto-gradient shrink-0"></span><span class="font-medium text-gray-900 max-w-md truncate">{a.title}</span></div></td>
-            <td class="px-6 py-4 text-gray-600">{a.category}</td>
-            <td class="px-6 py-4"><span class={`inline-flex text-[0.6rem] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ${a.draft ? 'text-amber-700 bg-amber-100' : 'text-green-700 bg-green-100'}`}>{a.draft ? 'Rascunho' : 'Publicado'}</span></td>
-            <td class="px-6 py-4 text-gray-500 whitespace-nowrap">{fmtBR(a.pubDate)}</td>
-            <td class="px-6 py-4"><div class="flex items-center justify-end gap-2"><a href="https://www.evolutto.com/blog" class="w-9 h-9 grid place-items-center rounded-lg text-gray-500 hover:text-evolutto-blue hover:bg-evolutto-blue/10 transition-colors"><i class="w-4 h-4" data-lucide="eye"></i></a><a href={`/artigos/editar/${a.slug}`} class="w-9 h-9 grid place-items-center rounded-lg text-gray-500 hover:text-evolutto-blue hover:bg-evolutto-blue/10 transition-colors"><i class="w-4 h-4" data-lucide="pencil"></i></a></div></td>
-          </tr>
-        ))}
+      <tbody id="recentes">
+        <tr><td colspan="5" class="px-6 py-10 text-center text-gray-400 text-sm">Carregando…</td></tr>
       </tbody>
     </table>
   </div>
+
+  <script>
+    import { supa, requireAuth } from '../lib/supa';
+    import { createIcons, icons } from 'lucide';
+
+    const esc = (s: string) => (s || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
+    const fmtBR = (d: string | null) => (d ? new Date(d + 'T00:00:00').toLocaleDateString('pt-BR') : '—');
+    const set = (id: string, v: string | number) => { const el = document.getElementById(id); if (el) el.textContent = String(v); };
+
+    (async () => {
+      const session = await requireAuth();
+      if (!session) return;
+
+      const { data: arts } = await supa.from('evolutto_articles')
+        .select('id,slug,title,category,status,pub_date')
+        .order('pub_date', { ascending: false, nullsFirst: false })
+        .order('updated_at', { ascending: false });
+      const list = arts || [];
+      const pub = list.filter((a) => a.status === 'published').length;
+      set('stat-total', list.length);
+      set('stat-pub', pub);
+      set('stat-rascunho', list.length - pub);
+
+      const { count: users } = await supa.from('evolutto_profiles').select('id', { count: 'exact', head: true });
+      set('stat-users', users ?? '—');
+      const { count: hist } = await supa.from('evolutto_historias').select('id', { count: 'exact', head: true }).eq('status', 'pendente');
+      set('stat-historias', hist ?? 0);
+
+      const tb = document.getElementById('recentes')!;
+      const recentes = list.slice(0, 6);
+      if (!recentes.length) {
+        tb.innerHTML = '<tr><td colspan="5" class="px-6 py-10 text-center text-gray-400 text-sm">Nenhum artigo ainda.</td></tr>';
+      } else {
+        tb.innerHTML = recentes.map((a) => {
+          const p = a.status === 'published';
+          return `<tr class="border-b border-gray-50 hover:bg-gray-50/60 transition-colors">
+            <td class="px-6 py-4"><div class="flex items-center gap-3"><span class="w-9 h-9 rounded-lg bg-evolutto-gradient shrink-0"></span><span class="font-medium text-gray-900 max-w-md truncate">${esc(a.title)}</span></div></td>
+            <td class="px-6 py-4 text-gray-600">${esc(a.category || 'Geral')}</td>
+            <td class="px-6 py-4"><span class="inline-flex text-[0.6rem] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ${p ? 'text-green-700 bg-green-100' : 'text-amber-700 bg-amber-100'}">${p ? 'Publicado' : 'Rascunho'}</span></td>
+            <td class="px-6 py-4 text-gray-500 whitespace-nowrap">${fmtBR(a.pub_date)}</td>
+            <td class="px-6 py-4"><div class="flex items-center justify-end gap-2">
+              <a href="https://www.evolutto.com/blog/${encodeURIComponent(a.slug)}" target="_blank" rel="noopener" class="w-9 h-9 grid place-items-center rounded-lg text-gray-500 hover:text-evolutto-blue hover:bg-evolutto-blue/10 transition-colors" title="Ver no blog"><i class="w-4 h-4" data-lucide="eye"></i></a>
+              <a href="/artigos/editar?slug=${encodeURIComponent(a.slug)}" class="w-9 h-9 grid place-items-center rounded-lg text-gray-500 hover:text-evolutto-blue hover:bg-evolutto-blue/10 transition-colors" title="Editar"><i class="w-4 h-4" data-lucide="pencil"></i></a>
+            </div></td>
+          </tr>`;
+        }).join('');
+      }
+      createIcons({ icons });
+    })();
+  </script>
 </CmsLayout>
