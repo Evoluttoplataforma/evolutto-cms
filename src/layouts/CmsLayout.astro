@@ -92,7 +92,7 @@ const navBottom = [
         const elIni = document.querySelector('[data-user-iniciais]'); if (elIni) elIni.textContent = nome.slice(0, 2).toUpperCase();
       });
       document.getElementById('cms-logout')?.addEventListener('click', async () => {
-        await supa.auth.signOut(); window.location.href = '/login';
+        await supa.auth.signOut(); window.location.href = '/acesso';
       });
     </script>
   </body>

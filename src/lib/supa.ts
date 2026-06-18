@@ -11,6 +11,6 @@ export const supa = createClient(url, anon);
 /** Redireciona pro /login se não houver sessão. Use no topo de cada página protegida. */
 export async function requireAuth() {
   const { data } = await supa.auth.getSession();
-  if (!data.session) { window.location.href = '/login'; return null; }
+  if (!data.session) { window.location.href = '/acesso'; return null; }
   return data.session;
 }
