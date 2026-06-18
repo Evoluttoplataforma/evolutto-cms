@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
     let mc = false;
     try { mc = await toMailchimp(lead); } catch (_) { mc = false; }
 
-    const { error } = await supabase.from('leads').insert({
+    const { error } = await supabase.from('evolutto_leads').insert({
       nome: lead.nome, telefone: lead.telefone, email: lead.email ?? null,
       empresa: lead.empresa ?? null, oque_faz: lead.oque_faz ?? null,
       eu_sou: lead.eu_sou ?? null, minha_empresa: lead.minha_empresa ?? null,

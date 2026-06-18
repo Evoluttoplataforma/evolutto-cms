@@ -1,10 +1,10 @@
 -- ============================================================
 -- Evolutto CMS — schema inicial (Supabase / Postgres)
--- Aplicar via: supabase db push  (ou painel SQL)
+-- Projeto compartilhado → todas as tabelas usam prefixo evolutto_
 -- ============================================================
 
 -- ---------- PERFIS (estende auth.users) ----------
-create table if not exists profiles (
+create table if not exists evolutto_profiles (
   id uuid references auth.users on delete cascade primary key,
   nome text,
   email text,
@@ -15,7 +15,7 @@ create table if not exists profiles (
 );
 
 -- ---------- ARTIGOS ----------
-create table if not exists articles (
+create table if not exists evolutto_articles (
   id uuid primary key default gen_random_uuid(),
   slug text unique not null,
   title text not null,
@@ -29,24 +29,24 @@ create table if not exists articles (
   author_photo text,
   cover text,
   og_image text,
-  body text,                                 -- markdown/html
-  faq jsonb not null default '[]',           -- [{pergunta, resposta}]
+  body text,
+  faq jsonb not null default '[]',
   reading_time int,
   status text not null default 'draft',      -- draft | published
   pub_date date,
   updated_date date,
-  created_by uuid references profiles(id),
+  created_by uuid references evolutto_profiles(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-create index if not exists articles_status_idx on articles(status, pub_date desc);
-create index if not exists articles_category_idx on articles(category);
+create index if not exists evolutto_articles_status_idx on evolutto_articles(status, pub_date desc);
+create index if not exists evolutto_articles_category_idx on evolutto_articles(category);
 
--- ---------- ISCAS DIGITAIS (lead magnets) ----------
-create table if not exists iscas (
+-- ---------- ISCAS DIGITAIS ----------
+create table if not exists evolutto_iscas (
   id uuid primary key default gen_random_uuid(),
   titulo text not null,
-  tipo text,                                 -- eBook | Checklist | Planilha | Playbook | Guia | Template
+  tipo text,
   descricao text,
   arquivo_url text,
   capa_url text,
@@ -57,9 +57,9 @@ create table if not exists iscas (
 );
 
 -- ---------- DOWNLOADS DE ISCA (captura de lead) ----------
-create table if not exists isca_downloads (
+create table if not exists evolutto_isca_downloads (
   id uuid primary key default gen_random_uuid(),
-  isca_id uuid references iscas(id) on delete set null,
+  isca_id uuid references evolutto_iscas(id) on delete set null,
   nome text,
   email text,
   telefone text,
@@ -67,18 +67,18 @@ create table if not exists isca_downloads (
 );
 
 -- ---------- BANNERS ----------
-create table if not exists banners (
+create table if not exists evolutto_banners (
   id uuid primary key default gen_random_uuid(),
   titulo text,
-  posicao text,                              -- Topo do site | Sidebar do blog | Rodapé | Dentro do artigo
+  posicao text,
   link text,
   imagem_url text,
   ativo boolean not null default true,
   created_at timestamptz not null default now()
 );
 
--- ---------- HISTÓRIAS DE CLIENTES (cases / depoimentos) ----------
-create table if not exists historias (
+-- ---------- HISTÓRIAS DE CLIENTES ----------
+create table if not exists evolutto_historias (
   id uuid primary key default gen_random_uuid(),
   nome text not null,
   empresa text,
@@ -90,9 +90,9 @@ create table if not exists historias (
 );
 
 -- ---------- COMENTÁRIOS ----------
-create table if not exists comentarios (
+create table if not exists evolutto_comentarios (
   id uuid primary key default gen_random_uuid(),
-  article_id uuid references articles(id) on delete cascade,
+  article_id uuid references evolutto_articles(id) on delete cascade,
   artigo_titulo text,
   autor text,
   email text,
@@ -101,8 +101,8 @@ create table if not exists comentarios (
   created_at timestamptz not null default now()
 );
 
--- ---------- LEADS (formulário de diagnóstico / vaga) ----------
-create table if not exists leads (
+-- ---------- LEADS (formulário) ----------
+create table if not exists evolutto_leads (
   id uuid primary key default gen_random_uuid(),
   nome text,
   telefone text,
@@ -116,44 +116,44 @@ create table if not exists leads (
   projetos_ativos text,
   faturamento text,
   tipo text not null default 'diagnostico',  -- diagnostico | vaga_bootcamp | isca
-  origem text,                               -- URL/página de origem
+  origem text,
   utm jsonb,
   enviado_mailchimp boolean not null default false,
   enviado_crm boolean not null default false,
   created_at timestamptz not null default now()
 );
-create index if not exists leads_created_idx on leads(created_at desc);
+create index if not exists evolutto_leads_created_idx on evolutto_leads(created_at desc);
 
 -- ============================================================
--- RLS (Row Level Security)
+-- RLS
 -- ============================================================
-alter table profiles       enable row level security;
-alter table articles       enable row level security;
-alter table iscas          enable row level security;
-alter table isca_downloads enable row level security;
-alter table banners        enable row level security;
-alter table historias      enable row level security;
-alter table comentarios    enable row level security;
-alter table leads          enable row level security;
+alter table evolutto_profiles       enable row level security;
+alter table evolutto_articles       enable row level security;
+alter table evolutto_iscas          enable row level security;
+alter table evolutto_isca_downloads enable row level security;
+alter table evolutto_banners        enable row level security;
+alter table evolutto_historias      enable row level security;
+alter table evolutto_comentarios    enable row level security;
+alter table evolutto_leads          enable row level security;
 
 -- Leitura pública do conteúdo publicado/ativo/aprovado
-create policy "pub_articles"   on articles    for select using (status = 'published');
-create policy "pub_iscas"      on iscas       for select using (ativo = true);
-create policy "pub_banners"    on banners     for select using (ativo = true);
-create policy "pub_historias"  on historias   for select using (status = 'aprovado');
-create policy "pub_comentarios" on comentarios for select using (status = 'aprovado');
+create policy "evo_pub_articles"    on evolutto_articles    for select using (status = 'published');
+create policy "evo_pub_iscas"       on evolutto_iscas       for select using (ativo = true);
+create policy "evo_pub_banners"     on evolutto_banners     for select using (ativo = true);
+create policy "evo_pub_historias"   on evolutto_historias   for select using (status = 'aprovado');
+create policy "evo_pub_comentarios" on evolutto_comentarios for select using (status = 'aprovado');
 
--- Inserts públicos (formulários) — leads, downloads e comentários (entram como pendente)
-create policy "anon_leads"     on leads          for insert with check (true);
-create policy "anon_downloads" on isca_downloads for insert with check (true);
-create policy "anon_coment"    on comentarios    for insert with check (status = 'pendente');
+-- Inserts públicos (formulários)
+create policy "evo_anon_leads"     on evolutto_leads          for insert with check (true);
+create policy "evo_anon_downloads" on evolutto_isca_downloads for insert with check (true);
+create policy "evo_anon_coment"    on evolutto_comentarios    for insert with check (status = 'pendente');
 
--- Usuários autenticados (equipe) gerenciam tudo
-create policy "auth_all_articles"   on articles    for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
-create policy "auth_all_iscas"      on iscas       for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
-create policy "auth_all_banners"    on banners     for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
-create policy "auth_all_historias"  on historias   for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
-create policy "auth_all_coment"     on comentarios for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
-create policy "auth_all_leads"      on leads       for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
-create policy "auth_all_downloads"  on isca_downloads for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
-create policy "auth_profiles"       on profiles    for all using (auth.uid() = id) with check (auth.uid() = id);
+-- Equipe autenticada gerencia tudo
+create policy "evo_auth_articles"  on evolutto_articles       for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "evo_auth_iscas"     on evolutto_iscas          for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "evo_auth_banners"   on evolutto_banners        for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "evo_auth_historias" on evolutto_historias      for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "evo_auth_coment"    on evolutto_comentarios    for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "evo_auth_leads"     on evolutto_leads          for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "evo_auth_downloads" on evolutto_isca_downloads for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "evo_auth_profiles"  on evolutto_profiles       for all using (auth.uid() = id) with check (auth.uid() = id);
