@@ -10,7 +10,17 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import matter from 'gray-matter';
+import { marked } from 'marked';
 import { createClient } from '@supabase/supabase-js';
+
+// Converte o corpo (markdown + HTML solto do WordPress) em HTML limpo.
+// Remove o <h1> inicial duplicado (o título já é exibido no cabeçalho do post).
+function toHtml(body) {
+  let b = (body || '').trim();
+  if (!b) return '';
+  b = b.replace(/^\s*<h1[^>]*>[\s\S]*?<\/h1>\s*/i, '');
+  return marked.parse(b, { gfm: true, breaks: false, async: false });
+}
 
 const URL = process.env.PUBLIC_SUPABASE_URL || 'https://yfpdrckyuxltvznqfqgh.supabase.co';
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -39,7 +49,7 @@ const rows = files.map((f) => {
     status: d.draft ? 'draft' : 'published',
     pub_date: toDate(d.pubDate),
     updated_date: toDate(d.updatedDate),
-    body: content.trim(),
+    body: toHtml(content),
   };
 });
 
