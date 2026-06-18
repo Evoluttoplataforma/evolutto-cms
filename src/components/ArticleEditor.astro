@@ -186,6 +186,7 @@ const tools = [
 
   const editSlug = new URLSearchParams(location.search).get('slug');
   let editId: string | null = null; // id do artigo em edição
+  let origStatus = ''; // status antes de salvar (p/ decidir rebuild)
 
   // Se estiver editando, busca o artigo e preenche o formulário
   if (editSlug) {
@@ -193,6 +194,7 @@ const tools = [
     if (error) { alert('Erro ao carregar o artigo: ' + error.message); }
     else if (data) {
       editId = data.id;
+      origStatus = data.status || '';
       titulo.value = data.title || '';
       slug.value = data.slug || ''; slugEdited = true; slugPreview.textContent = data.slug || 'novo-artigo';
       editor.innerHTML = data.body || '';
@@ -246,6 +248,14 @@ const tools = [
       if (btn) { btn.disabled = false; btn.textContent = orig; }
       alert(error.code === '23505' ? 'Já existe um artigo com esse slug. Mude o slug.' : 'Erro ao salvar: ' + error.message);
       return;
+    }
+
+    // Se o artigo está (ou estava) publicado, dispara o rebuild do blog
+    if (status === 'published' || origStatus === 'published') {
+      try { await supa.functions.invoke('rebuild'); } catch (_) {}
+      alert(status === 'published'
+        ? 'Publicado! O blog no ar será atualizado em ~2 minutos.'
+        : 'Salvo. Como o artigo foi despublicado, o blog será atualizado em ~2 minutos.');
     }
     location.href = '/artigos';
   }
