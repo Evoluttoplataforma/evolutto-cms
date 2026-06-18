@@ -59,8 +59,8 @@ const tools = [
       <input id="autor" type="text" value={post?.author ?? 'Equipe Evolutto'} class="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue transition" />
       <label class="block text-sm font-semibold text-gray-700 mt-5 mb-2">Foto do autor</label>
       <div class="flex items-center gap-3">
-        <span class="w-12 h-12 rounded-full bg-evolutto-gradient shrink-0"></span>
-        <label class="flex-1 border-2 border-dashed border-gray-300 rounded-xl px-4 py-3 text-center text-xs text-gray-500 cursor-pointer hover:border-evolutto-blue/50 transition-colors">Clique ou arraste (máx 2MB)<input type="file" accept="image/*" class="hidden" /></label>
+        <span id="autorfoto-preview" class="w-12 h-12 rounded-full bg-evolutto-gradient bg-cover bg-center shrink-0"></span>
+        <label class="flex-1 border-2 border-dashed border-gray-300 rounded-xl px-4 py-3 text-center text-xs text-gray-500 cursor-pointer hover:border-evolutto-blue/50 transition-colors"><span id="autorfoto-label">Clique para enviar (máx 2MB)</span><input id="autorfoto-input" type="file" accept="image/*" class="hidden" /></label>
       </div>
       <label class="block text-sm font-semibold text-gray-700 mt-5 mb-2">Tempo de leitura</label>
       <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700">
@@ -73,11 +73,14 @@ const tools = [
     </div>
 
     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-      <h3 class="text-base font-bold text-gray-900 mb-4">Imagem destaque</h3>
-      <label class="block aspect-[16/9] rounded-xl border-2 border-dashed border-gray-300 grid place-items-center cursor-pointer hover:border-evolutto-blue/50 transition-colors text-center">
-        <div class="text-gray-400"><i class="w-7 h-7 mx-auto mb-2" data-lucide="image"></i><p class="text-xs">Clique ou arraste a imagem</p></div>
-        <input type="file" accept="image/*" class="hidden" />
+      <h3 class="text-base font-bold text-gray-900 mb-4">Imagem destaque (capa)</h3>
+      <label id="cover-drop" class="relative block aspect-[16/9] rounded-xl border-2 border-dashed border-gray-300 overflow-hidden grid place-items-center cursor-pointer hover:border-evolutto-blue/50 transition-colors text-center">
+        <img id="cover-preview" class="absolute inset-0 w-full h-full object-cover hidden" alt="" />
+        <div id="cover-ph" class="text-gray-400"><i class="w-7 h-7 mx-auto mb-2" data-lucide="image"></i><p class="text-xs">Clique para enviar a capa</p></div>
+        <div id="cover-loading" class="absolute inset-0 bg-white/80 grid place-items-center text-xs font-semibold text-evolutto-blue hidden">Enviando…</div>
+        <input id="cover-input" type="file" accept="image/*" class="hidden" />
       </label>
+      <button id="cover-remove" type="button" class="mt-2 text-xs text-gray-400 hover:text-red-500 transition-colors hidden">Remover capa</button>
     </div>
 
     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
@@ -133,6 +136,54 @@ const tools = [
   const btnPub = document.getElementById('btn-publicar') as HTMLButtonElement | null;
   const btnRas = document.getElementById('btn-rascunho') as HTMLButtonElement | null;
 
+  // ---- Upload de imagens (Supabase Storage: bucket evolutto-media) ----
+  const coverInput = document.getElementById('cover-input') as HTMLInputElement;
+  const coverPreview = document.getElementById('cover-preview') as HTMLImageElement;
+  const coverPh = document.getElementById('cover-ph')!;
+  const coverLoading = document.getElementById('cover-loading')!;
+  const coverRemove = document.getElementById('cover-remove')!;
+  const autorFotoInput = document.getElementById('autorfoto-input') as HTMLInputElement;
+  const autorFotoPreview = document.getElementById('autorfoto-preview')!;
+  const autorFotoLabel = document.getElementById('autorfoto-label')!;
+
+  let coverUrl = '';
+  let autorFotoUrl = '';
+
+  async function uploadImg(file: File, folder: string): Promise<string | null> {
+    const base = slugify(slug.value || titulo.value || 'img') || 'img';
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+    const path = `${folder}/${base}-${Date.now()}.${ext}`;
+    const { error } = await supa.storage.from('evolutto-media').upload(path, file, { upsert: true, contentType: file.type || 'image/jpeg' });
+    if (error) { alert('Erro no upload: ' + error.message); return null; }
+    return supa.storage.from('evolutto-media').getPublicUrl(path).data.publicUrl;
+  }
+  function showCover(u: string) {
+    coverUrl = u; coverPreview.src = u; coverPreview.classList.remove('hidden');
+    coverPh.classList.add('hidden'); coverRemove.classList.remove('hidden');
+  }
+  coverInput?.addEventListener('change', async () => {
+    const f = coverInput.files?.[0]; if (!f) return;
+    if (f.size > 5 * 1024 * 1024) { alert('Imagem muito grande (máx 5MB).'); coverInput.value = ''; return; }
+    coverLoading.classList.remove('hidden');
+    const u = await uploadImg(f, 'covers');
+    coverLoading.classList.add('hidden');
+    if (u) showCover(u);
+    coverInput.value = '';
+  });
+  coverRemove?.addEventListener('click', () => {
+    coverUrl = ''; coverPreview.src = ''; coverPreview.classList.add('hidden');
+    coverPh.classList.remove('hidden'); coverRemove.classList.add('hidden');
+  });
+  autorFotoInput?.addEventListener('change', async () => {
+    const f = autorFotoInput.files?.[0]; if (!f) return;
+    if (f.size > 2 * 1024 * 1024) { alert('Foto muito grande (máx 2MB).'); autorFotoInput.value = ''; return; }
+    autorFotoLabel.textContent = 'Enviando…';
+    const u = await uploadImg(f, 'autores');
+    if (u) { autorFotoUrl = u; (autorFotoPreview as HTMLElement).style.backgroundImage = `url(${u})`; autorFotoLabel.textContent = 'Trocar foto'; }
+    else { autorFotoLabel.textContent = 'Clique para enviar (máx 2MB)'; }
+    autorFotoInput.value = '';
+  });
+
   const editSlug = new URLSearchParams(location.search).get('slug');
   let editId: string | null = null; // id do artigo em edição
 
@@ -149,6 +200,8 @@ const tools = [
       autor.value = data.author || 'Equipe Evolutto';
       meta.value = data.seo_description || data.description || '';
       tldr.value = data.tldr || '';
+      if (data.cover) showCover(data.cover);
+      if (data.author_photo) { autorFotoUrl = data.author_photo; (autorFotoPreview as HTMLElement).style.backgroundImage = `url(${data.author_photo})`; autorFotoLabel.textContent = 'Trocar foto'; }
       updateStats(); metaCount.textContent = String(meta.value.length);
     }
   }
@@ -174,6 +227,9 @@ const tools = [
       author: autor.value.trim() || 'Equipe Evolutto',
       description: desc, seo_description: desc,
       tldr: tldr.value.trim() || null,
+      cover: coverUrl || null,
+      og_image: coverUrl || null,
+      author_photo: autorFotoUrl || null,
       reading_time: Math.max(1, Math.round(countWords() / 200)),
       status, updated_date: hoje,
     };
