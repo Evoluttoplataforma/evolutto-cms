@@ -1,13 +1,5 @@
 ---
 import CmsLayout from '../layouts/CmsLayout.astro';
-const U = '/wp-content/uploads';
-const iscas = [
-  { titulo: 'eBook: Passos para a Digitalização', tipo: 'eBook', downloads: 1290, ativo: true, url: `${U}/2024/02/cms_files_198426_1614344601ebook-evolutto-passos-para-a-digitalizacao.pdf` },
-  { titulo: 'eBook: Passo a Passo para Escalar a Consultoria', tipo: 'eBook', downloads: 842, ativo: true, url: `${U}/2024/05/EBOOK-EVOLUTTO-PassoaPasso-EscalarConsultoria-1.pdf` },
-  { titulo: 'eBook: Atenda 50 Clientes Simultaneamente', tipo: 'eBook', downloads: 651, ativo: true, url: `${U}/2024/05/cms_files_198426_1611841844Ebook_-_Evolutto_-_Aprenda_a_Atender_50_Clientes_Simultaneamente.pdf` },
-  { titulo: 'Playbook de Calls 2.0', tipo: 'Playbook', downloads: 318, ativo: true, url: `${U}/2024/04/PLAYBOOK-DE-CALLS-2.0-1.pdf` },
-  { titulo: 'Guia: Consultoria Tradicional x Escalável', tipo: 'Guia', downloads: 95, ativo: true, url: `${U}/2025/12/consultoria_tradicional_escalavel_20251201233036.pdf` },
-];
 const tipos = ['eBook', 'Checklist', 'Planilha', 'Playbook', 'Guia', 'Template', 'Webinar'];
 ---
 
@@ -15,41 +7,113 @@ const tipos = ['eBook', 'Checklist', 'Planilha', 'Playbook', 'Guia', 'Template',
   <button slot="actions" id="novo" class="inline-flex items-center gap-2 bg-evolutto-blue text-white text-sm font-bold px-5 py-2.5 rounded-full hover:brightness-110 hover:scale-105 transition-all shadow-lg shadow-evolutto-blue/30"><i class="w-4 h-4" data-lucide="plus"></i> Nova isca</button>
 
   <div id="form" class="hidden bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-6 max-w-2xl">
-    <h2 class="text-base font-bold text-gray-900 mb-5">Nova isca digital</h2>
+    <h2 id="form-titulo" class="text-base font-bold text-gray-900 mb-5">Nova isca digital</h2>
     <div class="grid sm:grid-cols-2 gap-4">
-      <div class="sm:col-span-2"><label class="block text-sm font-semibold text-gray-700 mb-1.5">Título</label><input class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue" placeholder="Ex.: eBook: Passos para a Digitalização" /></div>
-      <div><label class="block text-sm font-semibold text-gray-700 mb-1.5">Tipo</label><select class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue">{tipos.map((t) => <option>{t}</option>)}</select></div>
-      <div><label class="block text-sm font-semibold text-gray-700 mb-1.5">CTA (texto do botão)</label><input class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue" placeholder="Baixar agora" /></div>
-      <div class="sm:col-span-2"><label class="block text-sm font-semibold text-gray-700 mb-1.5">Arquivo / URL do material</label><input class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue" placeholder="https://… (PDF, planilha, etc.)" /></div>
-      <div class="sm:col-span-2"><label class="block text-sm font-semibold text-gray-700 mb-1.5">Descrição</label><textarea rows="2" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue" placeholder="O que a pessoa recebe ao baixar"></textarea></div>
+      <div class="sm:col-span-2"><label class="block text-sm font-semibold text-gray-700 mb-1.5">Título</label><input id="i-titulo" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue" placeholder="Ex.: eBook: Passos para a Digitalização" /></div>
+      <div><label class="block text-sm font-semibold text-gray-700 mb-1.5">Tipo</label><select id="i-tipo" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue">{tipos.map((t) => <option>{t}</option>)}</select></div>
+      <div><label class="block text-sm font-semibold text-gray-700 mb-1.5">CTA (texto do botão)</label><input id="i-cta" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue" placeholder="Baixar agora" /></div>
+      <div class="sm:col-span-2">
+        <label class="block text-sm font-semibold text-gray-700 mb-1.5">Arquivo do material (PDF, planilha…)</label>
+        <div class="flex items-center gap-2">
+          <input id="i-arquivo" class="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue" placeholder="Cole uma URL ou envie um arquivo →" />
+          <label class="shrink-0 inline-flex items-center gap-2 text-sm font-semibold text-evolutto-blue border border-evolutto-blue/40 px-4 py-2.5 rounded-xl cursor-pointer hover:bg-evolutto-blue/5"><i class="w-4 h-4" data-lucide="upload"></i><span id="i-upload-label">Enviar</span><input id="i-file" type="file" class="hidden" /></label>
+        </div>
+      </div>
+      <div class="sm:col-span-2"><label class="block text-sm font-semibold text-gray-700 mb-1.5">Descrição</label><textarea id="i-desc" rows="2" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue" placeholder="O que a pessoa recebe ao baixar"></textarea></div>
     </div>
-    <div class="flex gap-2 mt-5"><button class="bg-evolutto-blue text-white text-sm font-bold px-5 py-2.5 rounded-full hover:brightness-110" onclick="alert('Salvar: Supabase em breve')">Criar isca</button><button id="cancelar" class="text-sm font-semibold text-gray-600 px-4 py-2.5 rounded-full border border-gray-300 hover:bg-gray-100">Cancelar</button></div>
+    <div class="flex gap-2 mt-5"><button id="salvar" class="bg-evolutto-blue text-white text-sm font-bold px-5 py-2.5 rounded-full hover:brightness-110">Salvar isca</button><button id="cancelar" class="text-sm font-semibold text-gray-600 px-4 py-2.5 rounded-full border border-gray-300 hover:bg-gray-100">Cancelar</button></div>
   </div>
 
   <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
     <table class="w-full text-sm">
       <thead><tr class="text-left text-[0.65rem] font-semibold uppercase tracking-widest text-gray-400 border-b border-gray-100"><th class="px-6 py-3">Isca</th><th class="px-6 py-3">Tipo</th><th class="px-6 py-3">Downloads</th><th class="px-6 py-3">Status</th><th class="px-6 py-3 text-right">Ações</th></tr></thead>
-      <tbody>
-        {iscas.map((i) => (
-          <tr class="border-b border-gray-50 hover:bg-gray-50/60 transition-colors">
-            <td class="px-6 py-4"><a href={i.url} target="_blank" rel="noopener" class="flex items-center gap-3 group"><span class="w-9 h-9 rounded-lg bg-evolutto-blue/10 text-evolutto-blue grid place-items-center"><i class="w-4 h-4" data-lucide="magnet"></i></span><span class="font-medium text-gray-900 group-hover:text-evolutto-blue transition-colors">{i.titulo}</span></a></td>
-            <td class="px-6 py-4 text-gray-600">{i.tipo}</td>
-            <td class="px-6 py-4 text-gray-600 font-semibold">{i.downloads}</td>
-            <td class="px-6 py-4"><span class={`inline-flex text-[0.6rem] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ${i.ativo ? 'text-green-700 bg-green-100' : 'text-gray-500 bg-gray-200'}`}>{i.ativo ? 'Ativa' : 'Inativa'}</span></td>
-            <td class="px-6 py-4"><div class="flex items-center justify-end gap-2">
-              <a href={i.url} target="_blank" rel="noopener" class="w-9 h-9 grid place-items-center rounded-lg text-gray-500 hover:text-evolutto-blue hover:bg-evolutto-blue/10" title="Baixar / abrir material"><i class="w-4 h-4" data-lucide="download"></i></a>
-              <button class="w-9 h-9 grid place-items-center rounded-lg text-gray-500 hover:text-evolutto-blue hover:bg-evolutto-blue/10"><i class="w-4 h-4" data-lucide="pencil"></i></button>
-              <button class="w-9 h-9 grid place-items-center rounded-lg text-gray-500 hover:text-evolutto-red hover:bg-evolutto-red/10"><i class="w-4 h-4" data-lucide="trash-2"></i></button>
-            </div></td>
-          </tr>
-        ))}
-      </tbody>
+      <tbody id="rows"><tr><td colspan="5" class="px-6 py-10 text-center text-gray-400 text-sm">Carregando…</td></tr></tbody>
     </table>
   </div>
 
   <script>
-    const f = document.getElementById('form')!;
-    document.getElementById('novo')?.addEventListener('click', () => f.classList.toggle('hidden'));
-    document.getElementById('cancelar')?.addEventListener('click', () => f.classList.add('hidden'));
+    import { supa, requireAuth, uploadMedia } from '../lib/supa';
+    import { createIcons, icons } from 'lucide';
+
+    const esc = (s: string) => (s || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
+    const rows = document.getElementById('rows')!;
+    const form = document.getElementById('form')!;
+    const formTitulo = document.getElementById('form-titulo')!;
+    const fTit = document.getElementById('i-titulo') as HTMLInputElement;
+    const fTipo = document.getElementById('i-tipo') as HTMLSelectElement;
+    const fCta = document.getElementById('i-cta') as HTMLInputElement;
+    const fArq = document.getElementById('i-arquivo') as HTMLInputElement;
+    const fDesc = document.getElementById('i-desc') as HTMLTextAreaElement;
+    const fFile = document.getElementById('i-file') as HTMLInputElement;
+    const upLabel = document.getElementById('i-upload-label')!;
+    let editId: string | null = null;
+
+    function abrirNovo() {
+      editId = null; formTitulo.textContent = 'Nova isca digital';
+      fTit.value = ''; fTipo.selectedIndex = 0; fCta.value = 'Baixar agora'; fArq.value = ''; fDesc.value = '';
+      form.classList.remove('hidden'); form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    function abrirEdicao(i: any) {
+      editId = i.id; formTitulo.textContent = 'Editar isca';
+      fTit.value = i.titulo || ''; fTipo.value = i.tipo || 'eBook'; fCta.value = i.cta || 'Baixar agora';
+      fArq.value = i.arquivo_url || ''; fDesc.value = i.descricao || '';
+      form.classList.remove('hidden'); form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    fFile?.addEventListener('change', async () => {
+      const f = fFile.files?.[0]; if (!f) return;
+      if (f.size > 25 * 1024 * 1024) { alert('Arquivo muito grande (máx 25MB).'); fFile.value = ''; return; }
+      upLabel.textContent = 'Enviando…';
+      try { fArq.value = await uploadMedia(f, 'iscas'); upLabel.textContent = 'Enviar'; }
+      catch (e: any) { alert('Erro no upload: ' + e.message); upLabel.textContent = 'Enviar'; }
+      fFile.value = '';
+    });
+
+    document.getElementById('novo')?.addEventListener('click', abrirNovo);
+    document.getElementById('cancelar')?.addEventListener('click', () => form.classList.add('hidden'));
+    document.getElementById('salvar')?.addEventListener('click', async () => {
+      const titulo = fTit.value.trim(); if (!titulo) { alert('Dê um título à isca.'); return; }
+      const row = { titulo, tipo: fTipo.value, cta: fCta.value.trim() || 'Baixar agora', arquivo_url: fArq.value.trim() || null, descricao: fDesc.value.trim() || null };
+      const { error } = editId
+        ? await supa.from('evolutto_iscas').update(row).eq('id', editId)
+        : await supa.from('evolutto_iscas').insert(row);
+      if (error) { alert('Erro ao salvar: ' + error.message); return; }
+      form.classList.add('hidden'); carregar();
+    });
+
+    async function toggleAtivo(id: string, ativo: boolean) {
+      const { error } = await supa.from('evolutto_iscas').update({ ativo: !ativo }).eq('id', id);
+      if (error) alert('Erro: ' + error.message); else carregar();
+    }
+    async function excluir(id: string) {
+      if (!confirm('Excluir esta isca?')) return;
+      const { error } = await supa.from('evolutto_iscas').delete().eq('id', id);
+      if (error) alert('Erro: ' + error.message); else carregar();
+    }
+
+    async function carregar() {
+      const session = await requireAuth(); if (!session) return;
+      const { data, error } = await supa.from('evolutto_iscas').select('*').order('created_at', { ascending: false });
+      if (error) { rows.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-red-500 text-sm">Erro: ${esc(error.message)}</td></tr>`; return; }
+      const list = data || [];
+      if (!list.length) { rows.innerHTML = '<tr><td colspan="5" class="px-6 py-10 text-center text-gray-400 text-sm">Nenhuma isca ainda. Clique em “Nova isca”.</td></tr>'; return; }
+      rows.innerHTML = list.map((i) => `
+        <tr class="border-b border-gray-50 hover:bg-gray-50/60 transition-colors">
+          <td class="px-6 py-4">${i.arquivo_url ? `<a href="${esc(i.arquivo_url)}" target="_blank" rel="noopener" class="flex items-center gap-3 group"><span class="w-9 h-9 rounded-lg bg-evolutto-blue/10 text-evolutto-blue grid place-items-center"><i class="w-4 h-4" data-lucide="magnet"></i></span><span class="font-medium text-gray-900 group-hover:text-evolutto-blue">${esc(i.titulo)}</span></a>` : `<div class="flex items-center gap-3"><span class="w-9 h-9 rounded-lg bg-evolutto-blue/10 text-evolutto-blue grid place-items-center"><i class="w-4 h-4" data-lucide="magnet"></i></span><span class="font-medium text-gray-900">${esc(i.titulo)}</span></div>`}</td>
+          <td class="px-6 py-4 text-gray-600">${esc(i.tipo || '—')}</td>
+          <td class="px-6 py-4 text-gray-600 font-semibold">${i.downloads || 0}</td>
+          <td class="px-6 py-4"><button class="t-ativo inline-flex text-[0.6rem] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ${i.ativo ? 'text-green-700 bg-green-100' : 'text-gray-500 bg-gray-200'}" data-id="${i.id}" data-ativo="${i.ativo}">${i.ativo ? 'Ativa' : 'Inativa'}</button></td>
+          <td class="px-6 py-4"><div class="flex items-center justify-end gap-2">
+            ${i.arquivo_url ? `<a href="${esc(i.arquivo_url)}" target="_blank" rel="noopener" class="w-9 h-9 grid place-items-center rounded-lg text-gray-500 hover:text-evolutto-blue hover:bg-evolutto-blue/10" title="Abrir material"><i class="w-4 h-4" data-lucide="download"></i></a>` : ''}
+            <button class="b-editar w-9 h-9 grid place-items-center rounded-lg text-gray-500 hover:text-evolutto-blue hover:bg-evolutto-blue/10" data-id="${i.id}"><i class="w-4 h-4" data-lucide="pencil"></i></button>
+            <button class="b-excluir w-9 h-9 grid place-items-center rounded-lg text-gray-500 hover:text-evolutto-red hover:bg-evolutto-red/10" data-id="${i.id}"><i class="w-4 h-4" data-lucide="trash-2"></i></button>
+          </div></td>
+        </tr>`).join('');
+      createIcons({ icons });
+      rows.querySelectorAll<HTMLElement>('.t-ativo').forEach((b) => b.addEventListener('click', () => toggleAtivo(b.dataset.id!, b.dataset.ativo === 'true')));
+      rows.querySelectorAll<HTMLElement>('.b-editar').forEach((b) => b.addEventListener('click', () => abrirEdicao(list.find((x) => x.id === b.dataset.id))));
+      rows.querySelectorAll<HTMLElement>('.b-excluir').forEach((b) => b.addEventListener('click', () => excluir(b.dataset.id!)));
+    }
+    carregar();
   </script>
 </CmsLayout>

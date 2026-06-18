@@ -8,9 +8,19 @@ const anon =
 
 export const supa = createClient(url, anon);
 
-/** Redireciona pro /login se não houver sessão. Use no topo de cada página protegida. */
+/** Redireciona pro /acesso se não houver sessão. Use no topo de cada página protegida. */
 export async function requireAuth() {
   const { data } = await supa.auth.getSession();
   if (!data.session) { window.location.href = '/acesso'; return null; }
   return data.session;
+}
+
+/** Faz upload de um arquivo pro bucket evolutto-media e devolve a URL pública. */
+export async function uploadMedia(file: File, folder: string): Promise<string> {
+  const ext = (file.name.split('.').pop() || 'bin').toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin';
+  const rand = Math.random().toString(36).slice(2, 8);
+  const path = `${folder}/${Date.now()}-${rand}.${ext}`;
+  const { error } = await supa.storage.from('evolutto-media').upload(path, file, { upsert: true, contentType: file.type || undefined });
+  if (error) throw error;
+  return supa.storage.from('evolutto-media').getPublicUrl(path).data.publicUrl;
 }

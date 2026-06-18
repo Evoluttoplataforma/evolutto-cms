@@ -1,59 +1,120 @@
 ---
 import CmsLayout from '../layouts/CmsLayout.astro';
-const historias = [
-  { nome: 'Afonso Flatin', empresa: 'Bastidores da Advocacia', resultado: 'Empresa triplicou de tamanho', depo: 'De 2023 para 2024 nossa empresa triplicou. Antes tudo dependia de mim.', status: 'aprovado' },
-  { nome: 'André de Souza Machado', empresa: 'SGE Soluções', resultado: '+152% de faturamento', depo: 'Em 90 dias conquistei 45 clientes. Hoje somos 6 pessoas conectadas por um propósito.', status: 'aprovado' },
-  { nome: 'Marcos Vinícius', empresa: 'MV Consultoria', resultado: 'A validar', depo: 'Estou começando agora com o Evolutto e quero compartilhar minha jornada.', status: 'pendente' },
-];
 ---
 
 <CmsLayout title="Histórias de Clientes" active="historias">
   <button slot="actions" id="novo" class="inline-flex items-center gap-2 bg-evolutto-blue text-white text-sm font-bold px-5 py-2.5 rounded-full hover:brightness-110 hover:scale-105 transition-all shadow-lg shadow-evolutto-blue/30"><i class="w-4 h-4" data-lucide="plus"></i> Nova história</button>
 
   <div id="form" class="hidden bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-6 max-w-2xl">
-    <h2 class="text-base font-bold text-gray-900 mb-5">Nova história de cliente</h2>
+    <h2 id="form-titulo" class="text-base font-bold text-gray-900 mb-5">Nova história de cliente</h2>
     <div class="grid sm:grid-cols-2 gap-4">
-      <div><label class="block text-sm font-semibold text-gray-700 mb-1.5">Nome do cliente</label><input class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue" placeholder="Nome" /></div>
-      <div><label class="block text-sm font-semibold text-gray-700 mb-1.5">Empresa</label><input class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue" placeholder="Empresa" /></div>
-      <div class="sm:col-span-2"><label class="block text-sm font-semibold text-gray-700 mb-1.5">Resultado / métrica</label><input class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue" placeholder="Ex.: +152% de faturamento, 1→60 clientes" /></div>
-      <div class="sm:col-span-2"><label class="block text-sm font-semibold text-gray-700 mb-1.5">Depoimento</label><textarea rows="3" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue" placeholder="O que o cliente disse"></textarea></div>
-      <div><label class="block text-sm font-semibold text-gray-700 mb-1.5">Foto do cliente</label><label class="block border-2 border-dashed border-gray-300 rounded-xl px-4 py-3 text-center text-xs text-gray-500 cursor-pointer hover:border-evolutto-blue/50">Enviar foto<input type="file" accept="image/*" class="hidden" /></label></div>
+      <div><label class="block text-sm font-semibold text-gray-700 mb-1.5">Nome do cliente</label><input id="h-nome" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue" placeholder="Nome" /></div>
+      <div><label class="block text-sm font-semibold text-gray-700 mb-1.5">Empresa</label><input id="h-empresa" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue" placeholder="Empresa" /></div>
+      <div class="sm:col-span-2"><label class="block text-sm font-semibold text-gray-700 mb-1.5">Resultado / métrica</label><input id="h-resultado" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue" placeholder="Ex.: +152% de faturamento, 1→60 clientes" /></div>
+      <div class="sm:col-span-2"><label class="block text-sm font-semibold text-gray-700 mb-1.5">Depoimento</label><textarea id="h-depo" rows="3" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-evolutto-blue/30 focus:border-evolutto-blue" placeholder="O que o cliente disse"></textarea></div>
+      <div><label class="block text-sm font-semibold text-gray-700 mb-1.5">Foto do cliente</label><div class="flex items-center gap-3"><span id="h-foto-preview" class="w-12 h-12 rounded-full bg-evolutto-gradient bg-cover bg-center shrink-0"></span><label class="flex-1 border-2 border-dashed border-gray-300 rounded-xl px-4 py-3 text-center text-xs text-gray-500 cursor-pointer hover:border-evolutto-blue/50"><span id="h-foto-label">Enviar foto</span><input id="h-foto" type="file" accept="image/*" class="hidden" /></label></div></div>
     </div>
-    <div class="flex gap-2 mt-5"><button class="bg-evolutto-blue text-white text-sm font-bold px-5 py-2.5 rounded-full hover:brightness-110" onclick="alert('Salvar: Supabase em breve')">Criar história</button><button id="cancelar" class="text-sm font-semibold text-gray-600 px-4 py-2.5 rounded-full border border-gray-300 hover:bg-gray-100">Cancelar</button></div>
+    <div class="flex gap-2 mt-5"><button id="salvar" class="bg-evolutto-blue text-white text-sm font-bold px-5 py-2.5 rounded-full hover:brightness-110">Salvar história</button><button id="cancelar" class="text-sm font-semibold text-gray-600 px-4 py-2.5 rounded-full border border-gray-300 hover:bg-gray-100">Cancelar</button></div>
   </div>
 
-  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-    {historias.map((h) => (
-      <div class="hist bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col" data-status={h.status}>
-        <div class="flex items-center gap-3 mb-4">
-          <span class="w-12 h-12 rounded-full bg-evolutto-gradient shrink-0 grid place-items-center text-white text-sm font-bold">{h.nome.split(' ').map((n) => n[0]).slice(0,2).join('')}</span>
-          <div><p class="font-bold text-gray-900 leading-tight">{h.nome}</p><p class="text-xs text-gray-400">{h.empresa}</p></div>
-        </div>
-        <span class="inline-flex w-fit text-[0.65rem] font-bold uppercase tracking-widest text-evolutto-blue bg-evolutto-blue/10 px-2.5 py-1 rounded-full mb-3">{h.resultado}</span>
-        <p class="text-sm text-gray-600 leading-relaxed flex-1">"{h.depo}"</p>
-        <div class="flex items-center gap-2 mt-5 pt-4 border-t border-gray-100">
-          <button class={`btn-aprovar flex-1 items-center justify-center gap-2 text-sm font-semibold text-white bg-green-600 rounded-full py-2 hover:brightness-110 ${h.status === 'pendente' ? 'inline-flex' : 'hidden'}`}><i class="w-4 h-4" data-lucide="check"></i> Aprovar</button>
-          <span class={`aprovada flex-1 items-center justify-center gap-1.5 text-sm font-semibold text-green-700 ${h.status === 'pendente' ? 'hidden' : 'inline-flex'}`}><i class="w-4 h-4" data-lucide="badge-check"></i> Aprovada</span>
-          <button class="w-10 h-10 grid place-items-center rounded-full border border-gray-300 text-gray-500 hover:text-evolutto-blue hover:border-evolutto-blue/40"><i class="w-4 h-4" data-lucide="pencil"></i></button>
-        </div>
-      </div>
-    ))}
+  <div id="grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+    <p id="vazio" class="text-gray-400 text-sm">Carregando…</p>
   </div>
 
   <script>
-    document.querySelectorAll<HTMLButtonElement>('.btn-aprovar').forEach((b) => b.addEventListener('click', () => {
-      const card = b.closest('.hist') as HTMLElement;
-      card.dataset.status = 'aprovado';
-      b.classList.add('hidden'); b.classList.remove('inline-flex');
-      const ap = card.querySelector('.aprovada') as HTMLElement;
-      ap.classList.remove('hidden'); ap.classList.add('inline-flex');
-      if ((window as any).lucide) (window as any).lucide.createIcons();
-    }));
-  </script>
+    import { supa, requireAuth, uploadMedia } from '../lib/supa';
+    import { createIcons, icons } from 'lucide';
 
-  <script>
-    const f = document.getElementById('form')!;
-    document.getElementById('novo')?.addEventListener('click', () => f.classList.toggle('hidden'));
-    document.getElementById('cancelar')?.addEventListener('click', () => f.classList.add('hidden'));
+    const esc = (s: string) => (s || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
+    const iniciais = (n: string) => (n || '?').split(' ').map((x) => x[0]).slice(0, 2).join('').toUpperCase();
+    const grid = document.getElementById('grid')!;
+    const form = document.getElementById('form')!;
+    const formTitulo = document.getElementById('form-titulo')!;
+    const fNome = document.getElementById('h-nome') as HTMLInputElement;
+    const fEmp = document.getElementById('h-empresa') as HTMLInputElement;
+    const fRes = document.getElementById('h-resultado') as HTMLInputElement;
+    const fDepo = document.getElementById('h-depo') as HTMLTextAreaElement;
+    const fFoto = document.getElementById('h-foto') as HTMLInputElement;
+    const fotoPreview = document.getElementById('h-foto-preview')!;
+    const fotoLabel = document.getElementById('h-foto-label')!;
+    let editId: string | null = null;
+    let fotoUrl = '';
+
+    function abrirNovo() {
+      editId = null; formTitulo.textContent = 'Nova história de cliente';
+      fNome.value = ''; fEmp.value = ''; fRes.value = ''; fDepo.value = '';
+      fotoUrl = ''; (fotoPreview as HTMLElement).style.backgroundImage = ''; fotoLabel.textContent = 'Enviar foto';
+      form.classList.remove('hidden'); form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    function abrirEdicao(h: any) {
+      editId = h.id; formTitulo.textContent = 'Editar história';
+      fNome.value = h.nome || ''; fEmp.value = h.empresa || ''; fRes.value = h.resultado || ''; fDepo.value = h.depoimento || '';
+      fotoUrl = h.foto_url || '';
+      (fotoPreview as HTMLElement).style.backgroundImage = fotoUrl ? `url(${fotoUrl})` : '';
+      fotoLabel.textContent = fotoUrl ? 'Trocar foto' : 'Enviar foto';
+      form.classList.remove('hidden'); form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    fFoto?.addEventListener('change', async () => {
+      const f = fFoto.files?.[0]; if (!f) return;
+      if (f.size > 2 * 1024 * 1024) { alert('Foto muito grande (máx 2MB).'); fFoto.value = ''; return; }
+      fotoLabel.textContent = 'Enviando…';
+      try { fotoUrl = await uploadMedia(f, 'historias'); (fotoPreview as HTMLElement).style.backgroundImage = `url(${fotoUrl})`; fotoLabel.textContent = 'Trocar foto'; }
+      catch (e: any) { alert('Erro no upload: ' + e.message); fotoLabel.textContent = 'Enviar foto'; }
+      fFoto.value = '';
+    });
+
+    document.getElementById('novo')?.addEventListener('click', abrirNovo);
+    document.getElementById('cancelar')?.addEventListener('click', () => form.classList.add('hidden'));
+    document.getElementById('salvar')?.addEventListener('click', async () => {
+      const nome = fNome.value.trim(); if (!nome) { alert('Informe o nome do cliente.'); return; }
+      const row = { nome, empresa: fEmp.value.trim() || null, resultado: fRes.value.trim() || null, depoimento: fDepo.value.trim() || null, foto_url: fotoUrl || null };
+      const { error } = editId
+        ? await supa.from('evolutto_historias').update(row).eq('id', editId)
+        : await supa.from('evolutto_historias').insert(row);
+      if (error) { alert('Erro ao salvar: ' + error.message); return; }
+      form.classList.add('hidden'); carregar();
+    });
+
+    async function aprovar(id: string) {
+      const { error } = await supa.from('evolutto_historias').update({ status: 'aprovado' }).eq('id', id);
+      if (error) alert('Erro: ' + error.message); else carregar();
+    }
+    async function excluir(id: string) {
+      if (!confirm('Excluir esta história?')) return;
+      const { error } = await supa.from('evolutto_historias').delete().eq('id', id);
+      if (error) alert('Erro: ' + error.message); else carregar();
+    }
+
+    async function carregar() {
+      const session = await requireAuth(); if (!session) return;
+      const { data, error } = await supa.from('evolutto_historias').select('*').order('created_at', { ascending: false });
+      if (error) { grid.innerHTML = `<p class="text-red-500 text-sm">Erro: ${esc(error.message)}</p>`; return; }
+      const list = data || [];
+      if (!list.length) { grid.innerHTML = '<p class="text-gray-400 text-sm">Nenhuma história ainda. Clique em “Nova história”.</p>'; return; }
+      grid.innerHTML = list.map((h) => {
+        const aprov = h.status === 'aprovado';
+        return `<div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col">
+          <div class="flex items-center gap-3 mb-4">
+            <span class="w-12 h-12 rounded-full bg-evolutto-gradient bg-cover bg-center shrink-0 grid place-items-center text-white text-sm font-bold" ${h.foto_url ? `style="background-image:url('${esc(h.foto_url)}')"` : ''}>${h.foto_url ? '' : esc(iniciais(h.nome))}</span>
+            <div><p class="font-bold text-gray-900 leading-tight">${esc(h.nome)}</p><p class="text-xs text-gray-400">${esc(h.empresa || '')}</p></div>
+          </div>
+          ${h.resultado ? `<span class="inline-flex w-fit text-[0.65rem] font-bold uppercase tracking-widest text-evolutto-blue bg-evolutto-blue/10 px-2.5 py-1 rounded-full mb-3">${esc(h.resultado)}</span>` : ''}
+          <p class="text-sm text-gray-600 leading-relaxed flex-1">${h.depoimento ? '&ldquo;' + esc(h.depoimento) + '&rdquo;' : ''}</p>
+          <div class="flex items-center gap-2 mt-5 pt-4 border-t border-gray-100">
+            ${aprov
+              ? '<span class="flex-1 inline-flex items-center justify-center gap-1.5 text-sm font-semibold text-green-700"><i class="w-4 h-4" data-lucide="badge-check"></i> Aprovada</span>'
+              : `<button class="b-aprovar flex-1 inline-flex items-center justify-center gap-2 text-sm font-semibold text-white bg-green-600 rounded-full py-2 hover:brightness-110" data-id="${h.id}"><i class="w-4 h-4" data-lucide="check"></i> Aprovar</button>`}
+            <button class="b-editar w-10 h-10 grid place-items-center rounded-full border border-gray-300 text-gray-500 hover:text-evolutto-blue hover:border-evolutto-blue/40" data-id="${h.id}"><i class="w-4 h-4" data-lucide="pencil"></i></button>
+            <button class="b-excluir w-10 h-10 grid place-items-center rounded-full border border-gray-300 text-gray-500 hover:text-evolutto-red hover:border-evolutto-red/40" data-id="${h.id}"><i class="w-4 h-4" data-lucide="trash-2"></i></button>
+          </div>
+        </div>`;
+      }).join('');
+      createIcons({ icons });
+      grid.querySelectorAll<HTMLElement>('.b-aprovar').forEach((b) => b.addEventListener('click', () => aprovar(b.dataset.id!)));
+      grid.querySelectorAll<HTMLElement>('.b-editar').forEach((b) => b.addEventListener('click', () => abrirEdicao(list.find((x) => x.id === b.dataset.id))));
+      grid.querySelectorAll<HTMLElement>('.b-excluir').forEach((b) => b.addEventListener('click', () => excluir(b.dataset.id!)));
+    }
+    carregar();
   </script>
 </CmsLayout>

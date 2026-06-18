@@ -1,66 +1,84 @@
 ---
 import CmsLayout from '../layouts/CmsLayout.astro';
-const comentarios = [
-  { autor: 'Marina Alves', artigo: 'Como escalar consultoria: guia completo', texto: 'Excelente conteúdo! Ajudou demais a estruturar meu primeiro produto digital.', data: '06/06/2026', status: 'pendente' },
-  { autor: 'Carlos Eduardo', artigo: 'Como vender consultoria: 5 segredos', texto: 'Discordo do ponto sobre precificação, mas o resto é ótimo.', data: '05/06/2026', status: 'pendente' },
-  { autor: 'Patrícia Gomes', artigo: 'Gestão de consultoria digital', texto: 'Compartilhei com todo o meu time. Muito bom!', data: '04/06/2026', status: 'aprovado' },
-  { autor: 'João Pereira', artigo: 'Vídeos com IA', texto: 'Vou aplicar essas dicas nas minhas campanhas.', data: '03/06/2026', status: 'aprovado' },
-];
-const pendentes = comentarios.filter((c) => c.status === 'pendente').length;
 ---
 
 <CmsLayout title="Comentários" active="comentarios">
   <div class="flex items-center gap-2 mb-6">
-    <button class="tab-btn px-4 py-2 rounded-full text-sm font-semibold bg-evolutto-blue text-white" data-f="pendente">Pendentes <span class="ml-1 text-xs opacity-80">{pendentes}</span></button>
+    <button class="tab-btn px-4 py-2 rounded-full text-sm font-semibold bg-evolutto-blue text-white" data-f="pendente">Pendentes <span id="cnt-pendente" class="ml-1 text-xs opacity-80"></span></button>
     <button class="tab-btn px-4 py-2 rounded-full text-sm font-semibold bg-white border border-gray-300 text-gray-700 hover:bg-gray-50" data-f="aprovado">Aprovados</button>
     <button class="tab-btn px-4 py-2 rounded-full text-sm font-semibold bg-white border border-gray-300 text-gray-700 hover:bg-gray-50" data-f="todos">Todos</button>
   </div>
 
-  <div class="space-y-4" id="lista">
-    {comentarios.map((c) => (
-      <div class="com bg-white rounded-2xl border border-gray-200 shadow-sm p-6" data-status={c.status}>
-        <div class="flex items-start gap-4">
-          <span class="w-11 h-11 rounded-full bg-evolutto-gradient shrink-0 grid place-items-center text-white text-sm font-bold">{c.autor.split(' ').map((n) => n[0]).slice(0,2).join('')}</span>
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="font-bold text-gray-900">{c.autor}</span>
-              <span class="text-xs text-gray-400">em "{c.artigo}"</span>
-              <span class="text-xs text-gray-400">· {c.data}</span>
-              <span class={`badge text-[0.6rem] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ${c.status === 'pendente' ? 'text-amber-700 bg-amber-100' : 'text-green-700 bg-green-100'}`}>{c.status === 'pendente' ? 'Pendente' : 'Aprovado'}</span>
-            </div>
-            <p class="text-[15px] text-gray-700 mt-2 leading-relaxed">{c.texto}</p>
-            <div class="flex items-center gap-2 mt-4">
-              <button class="btn-aprovar inline-flex items-center gap-2 text-sm font-semibold text-white bg-green-600 px-4 py-2 rounded-full hover:brightness-110"><i class="w-4 h-4" data-lucide="check"></i> Aprovar</button>
-              <button class="btn-rejeitar inline-flex items-center gap-2 text-sm font-semibold text-gray-700 border border-gray-300 px-4 py-2 rounded-full hover:bg-gray-50"><i class="w-4 h-4" data-lucide="trash-2"></i> Rejeitar</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    ))}
-  </div>
+  <div class="space-y-4" id="lista"><p class="text-gray-400 text-sm">Carregando…</p></div>
 
   <script>
-    function filtrar(f: string) {
-      document.querySelectorAll<HTMLElement>('.com').forEach((c) => {
-        c.style.display = f === 'todos' || c.dataset.status === f ? '' : 'none';
-      });
+    import { supa, requireAuth } from '../lib/supa';
+    import { createIcons, icons } from 'lucide';
+
+    const esc = (s: string) => (s || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
+    const iniciais = (n: string) => (n || '?').split(' ').map((x) => x[0]).slice(0, 2).join('').toUpperCase();
+    const fmtBR = (d: string) => (d ? new Date(d).toLocaleDateString('pt-BR') : '');
+    const lista = document.getElementById('lista')!;
+    let filtro = 'pendente';
+    let todos: any[] = [];
+
+    async function mudarStatus(id: string, status: string) {
+      const { error } = await supa.from('evolutto_comentarios').update({ status }).eq('id', id);
+      if (error) { alert('Erro: ' + error.message); return; }
+      carregar();
     }
+
+    function render() {
+      const list = filtro === 'todos' ? todos : todos.filter((c) => c.status === filtro);
+      document.getElementById('cnt-pendente')!.textContent = String(todos.filter((c) => c.status === 'pendente').length || '');
+      if (!list.length) { lista.innerHTML = `<p class="text-gray-400 text-sm py-6">Nenhum comentário ${filtro === 'todos' ? '' : filtro === 'pendente' ? 'pendente' : 'aprovado'}.</p>`; return; }
+      lista.innerHTML = list.map((c) => {
+        const pend = c.status === 'pendente';
+        const badge = pend ? 'text-amber-700 bg-amber-100' : c.status === 'aprovado' ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100';
+        const label = pend ? 'Pendente' : c.status === 'aprovado' ? 'Aprovado' : 'Rejeitado';
+        return `<div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+          <div class="flex items-start gap-4">
+            <span class="w-11 h-11 rounded-full bg-evolutto-gradient shrink-0 grid place-items-center text-white text-sm font-bold">${esc(iniciais(c.autor))}</span>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-bold text-gray-900">${esc(c.autor || 'Anônimo')}</span>
+                ${c.artigo_titulo ? `<span class="text-xs text-gray-400">em &ldquo;${esc(c.artigo_titulo)}&rdquo;</span>` : ''}
+                <span class="text-xs text-gray-400">· ${fmtBR(c.created_at)}</span>
+                <span class="text-[0.6rem] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ${badge}">${label}</span>
+              </div>
+              <p class="text-[15px] text-gray-700 mt-2 leading-relaxed">${esc(c.texto || '')}</p>
+              <div class="flex items-center gap-2 mt-4">
+                ${c.status !== 'aprovado' ? `<button class="b-aprovar inline-flex items-center gap-2 text-sm font-semibold text-white bg-green-600 px-4 py-2 rounded-full hover:brightness-110" data-id="${c.id}"><i class="w-4 h-4" data-lucide="check"></i> Aprovar</button>` : ''}
+                ${c.status !== 'rejeitado' ? `<button class="b-rejeitar inline-flex items-center gap-2 text-sm font-semibold text-gray-700 border border-gray-300 px-4 py-2 rounded-full hover:bg-gray-50" data-id="${c.id}"><i class="w-4 h-4" data-lucide="x"></i> Rejeitar</button>` : ''}
+                <button class="b-excluir inline-flex items-center gap-2 text-sm font-semibold text-gray-500 px-3 py-2 rounded-full hover:text-evolutto-red" data-id="${c.id}" title="Excluir"><i class="w-4 h-4" data-lucide="trash-2"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+      createIcons({ icons });
+      lista.querySelectorAll<HTMLElement>('.b-aprovar').forEach((b) => b.addEventListener('click', () => mudarStatus(b.dataset.id!, 'aprovado')));
+      lista.querySelectorAll<HTMLElement>('.b-rejeitar').forEach((b) => b.addEventListener('click', () => mudarStatus(b.dataset.id!, 'rejeitado')));
+      lista.querySelectorAll<HTMLElement>('.b-excluir').forEach((b) => b.addEventListener('click', async () => {
+        if (!confirm('Excluir este comentário?')) return;
+        const { error } = await supa.from('evolutto_comentarios').delete().eq('id', b.dataset.id!);
+        if (error) alert('Erro: ' + error.message); else carregar();
+      }));
+    }
+
     document.querySelectorAll<HTMLButtonElement>('.tab-btn').forEach((b) => b.addEventListener('click', () => {
-      document.querySelectorAll('.tab-btn').forEach((x) => x.classList.remove('bg-evolutto-blue','text-white'));
-      document.querySelectorAll('.tab-btn').forEach((x) => { if (!x.classList.contains('bg-evolutto-blue')) x.classList.add('bg-white','border','border-gray-300','text-gray-700'); });
-      b.classList.add('bg-evolutto-blue','text-white'); b.classList.remove('bg-white','border','border-gray-300','text-gray-700');
-      filtrar(b.dataset.f!);
+      document.querySelectorAll('.tab-btn').forEach((x) => { x.classList.remove('bg-evolutto-blue', 'text-white'); x.classList.add('bg-white', 'border', 'border-gray-300', 'text-gray-700'); });
+      b.classList.add('bg-evolutto-blue', 'text-white'); b.classList.remove('bg-white', 'border', 'border-gray-300', 'text-gray-700');
+      filtro = b.dataset.f!; render();
     }));
-    filtrar('pendente');
-    // ações (visual)
-    document.querySelectorAll('.btn-aprovar').forEach((b) => b.addEventListener('click', (e) => {
-      const card = (e.target as HTMLElement).closest('.com') as HTMLElement;
-      card.dataset.status = 'aprovado';
-      const badge = card.querySelector('.badge')!; badge.textContent = 'Aprovado'; badge.className = 'badge text-[0.6rem] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full text-green-700 bg-green-100';
-    }));
-    document.querySelectorAll('.btn-rejeitar').forEach((b) => b.addEventListener('click', (e) => {
-      const card = (e.target as HTMLElement).closest('.com') as HTMLElement;
-      card.style.opacity = '0.4';
-    }));
+
+    async function carregar() {
+      const session = await requireAuth(); if (!session) return;
+      const { data, error } = await supa.from('evolutto_comentarios').select('*').order('created_at', { ascending: false });
+      if (error) { lista.innerHTML = `<p class="text-red-500 text-sm">Erro: ${esc(error.message)}</p>`; return; }
+      todos = data || [];
+      render();
+    }
+    carregar();
   </script>
 </CmsLayout>
