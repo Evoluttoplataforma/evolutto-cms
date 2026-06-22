@@ -1,44 +1,51 @@
-// Edge Function: create-user
+// Edge Function: create-user (SEM imports — usa as APIs do Supabase via fetch p/ não travar no boot)
 // Cria um usuário do CMS (Auth + perfil). Só um usuário logado pode chamar.
-// Usa a service_role (disponível no ambiente da função) para a API admin.
-//
-// Deploy:  supabase functions deploy create-user
-// (não precisa de secret extra — SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY são automáticos)
+// Deploy pelo Dashboard (Edge Functions) com "Verify JWT" DESLIGADO.
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+const ANON = Deno.env.get('SUPABASE_ANON_KEY')!;
+const SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const cors = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+function json(obj: unknown, status = 200) {
+  return new Response(JSON.stringify(obj), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   if (req.method !== 'POST') return new Response('no', { status: 405, headers: cors });
-
   try {
     const authHeader = req.headers.get('Authorization') || '';
-    // valida que quem chamou está logado
-    const caller = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authHeader } } });
-    const { data: { user } } = await caller.auth.getUser(authHeader.replace('Bearer ', ''));
-    if (!user) return new Response(JSON.stringify({ error: 'não autorizado' }), { status: 401, headers: { ...cors, 'Content-Type': 'application/json' } });
+    // valida quem chamou (precisa estar logado)
+    const meRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers: { apikey: ANON, Authorization: authHeader } });
+    if (!meRes.ok) return json({ error: 'não autorizado' }, 401);
+    const me = await meRes.json();
+    if (!me?.id) return json({ error: 'não autorizado' }, 401);
 
     const { nome, email, senha, papel } = await req.json();
-    if (!email || !senha) return new Response(JSON.stringify({ error: 'email e senha são obrigatórios' }), { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } });
+    if (!email || !senha) return json({ error: 'email e senha são obrigatórios' }, 400);
 
-    // cliente admin (service_role) para criar o usuário
-    const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-    const { data: created, error: cErr } = await admin.auth.admin.createUser({
-      email, password: senha, email_confirm: true, user_metadata: { nome: nome || email.split('@')[0] },
+    // cria o usuário (Admin API com service_role)
+    const cRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
+      method: 'POST',
+      headers: { apikey: SERVICE, Authorization: `Bearer ${SERVICE}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: senha, email_confirm: true, user_metadata: { nome: nome || email.split('@')[0] } }),
     });
-    if (cErr) return new Response(JSON.stringify({ error: cErr.message }), { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } });
+    const created = await cRes.json();
+    if (!cRes.ok) return json({ error: created.msg || created.error_description || created.error || 'erro ao criar' }, 400);
 
-    // atualiza o perfil (o trigger já criou a linha) com nome/papel
-    await admin.from('evolutto_profiles').update({ nome: nome || email.split('@')[0], papel: papel || 'Autor', email }).eq('id', created.user!.id);
+    // atualiza o perfil (nome/papel)
+    await fetch(`${SUPABASE_URL}/rest/v1/evolutto_profiles?id=eq.${created.id}`, {
+      method: 'PATCH',
+      headers: { apikey: SERVICE, Authorization: `Bearer ${SERVICE}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({ nome: nome || email.split('@')[0], papel: papel || 'Autor', email }),
+    });
 
-    return new Response(JSON.stringify({ ok: true, id: created.user!.id }), { headers: { ...cors, 'Content-Type': 'application/json' } });
+    return json({ ok: true, id: created.id });
   } catch (err) {
-    return new Response(JSON.stringify({ error: String(err) }), { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } });
+    return json({ error: String(err) }, 500);
   }
 });
